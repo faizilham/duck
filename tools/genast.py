@@ -19,6 +19,22 @@ AST = {
             "Variable   -> name: Token",
         ]
     ),
+    "Stmt": (
+        [ 
+            ("Token", "../token"),
+            ("Expr", "./expr")
+        ],
+        [],
+        [
+            
+            "Assignment -> name: Token, expr: Expr",
+            "Block      -> statements: Stmt[]",
+            "Expression -> expr: Expr",
+            "If         -> condition: Expr, thenBranch: Stmt, elseBranch?: Stmt",
+            "While      -> condition: Expr, body: Stmt",
+            "VarDecl    -> name: Token, expr?: Expr",
+        ]
+    ),
 }
 
 TAB = " "*4
@@ -107,11 +123,11 @@ def define_ast(basename, imports, baseprops, type_data):
             writer.end_block()
             writer.writeln()
 
-        # Visitor Abstract Class
-        writer.start_block("export abstract class Visitor<T>".format(basename))
+        # Visitor Interface
+        writer.start_block("export interface Visitor<T>".format(basename))
         
         for (classname, _ ) in types:
-            writer.writeln("abstract visit{0}{1}(expr: {0}) : T;".format(classname, basename))
+            writer.writeln("visit{0}{1}({2}: {0}) : T;".format(classname, basename, basename.lower()))
         
         writer.end_block()
 

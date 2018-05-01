@@ -49,6 +49,7 @@ export class Lexer {
 
         switch(c){
             // delimiter
+            case ';': this.addToken(TokenType.SEMICOLON); break;
             case ',': this.addToken(TokenType.COMMA); break;
             case '.': this.addToken(TokenType.DOT); break;
 

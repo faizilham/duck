@@ -1,6 +1,7 @@
 import {Token, TokenType} from "./token"
 import {DuckType} from "./types"
 import {Expr} from "./ast/expr"
+import {Stmt} from "./ast/stmt"
 
 
 export class ParserError {
@@ -19,7 +20,113 @@ export class Parser {
 
     constructor(private tokens : Token[]){}
 
-    public parseExpr() : Expr{
+    public parse() : Stmt[] {
+        let statements : Stmt[] = [];
+        
+        while(!this.isAtEnd()){
+            statements.push(this.declaration());
+        }
+
+        return statements
+    }
+
+    private declaration() : Stmt {
+        if (this.match(TokenType.LET)) return this.varDeclaration();
+
+        return this.statement(); // TODO: try catch synchronize & 
+    }
+
+    private statement() : Stmt {
+        if (this.match(TokenType.IF)) return this.ifStatement();
+        if (this.match(TokenType.WHILE)) return this.whileStatement();
+        if (this.match(TokenType.LEFT_BRACE)) return this.blockStatement();
+
+        return this.expressionStatement();
+    }
+
+    private assignment(variable : Expr) : Stmt {
+        let token = this.previous();
+        let expr = this.expression();
+        this.consume(TokenType.SEMICOLON, "Expect ';' after expression");
+
+        if (variable instanceof Expr.Variable){
+            return new Stmt.Assignment(variable.name, expr);
+        } else {
+            throw this.error(token, "Invalide assignment target");
+        }
+    }
+
+    private block(): Stmt[] {
+        let statements : Stmt[] = [];
+
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()){
+            statements.push(this.declaration());
+        }
+
+        this.consume(TokenType.RIGHT_BRACE, "Expect '}");
+        return statements;
+    }
+
+    private blockStatement() : Stmt {
+        return new Stmt.Block(this.block());
+    }
+
+    private expressionStatement() : Stmt {
+        let expr = this.expression();
+
+        if (this.match(TokenType.EQUAL)){
+            return this.assignment(expr);
+        }
+
+        this.consume(TokenType.SEMICOLON, "Expect ';' after expression");
+
+        return new Stmt.Expression(expr);
+    }
+
+    private ifStatement() : Stmt {
+        let condition = this.expression();
+
+        this.consume(TokenType.LEFT_BRACE, "Expect '{' after if condition");
+        let thenBranch = this.blockStatement();
+
+        let elseBranch;
+
+        if (this.match(TokenType.ELSE)){
+            if (this.match(TokenType.IF)){
+                elseBranch = this.ifStatement();
+            } else {
+                this.consume(TokenType.LEFT_BRACE, "Expect '{' after else");
+                elseBranch = this.blockStatement();
+            }
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
+    }
+
+    private whileStatement() : Stmt {
+        let condition = this.expression();
+
+        this.consume(TokenType.LEFT_BRACE, "Expect '{' after loop condition");
+        let body = this.blockStatement();
+
+        return new Stmt.While(condition, body);
+    }
+
+    private varDeclaration() : Stmt {
+        let name = this.consume(TokenType.IDENTIFIER, "Expect a variable name");
+
+        let initializer;
+
+        if (this.match(TokenType.EQUAL)){
+            initializer = this.expression();
+        }
+
+        this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");
+        return new Stmt.VarDecl(name, initializer);
+    }
+
+    /*** Expression Parsing ***/
+    private parseExpr() : Expr{
         return this.expression();
     }
 
@@ -74,6 +181,8 @@ export class Parser {
         
         throw this.error(this.peek(), "Expect expression.");
     }
+
+    /*** Parsing Primitives ***/
 
     private advance() : Token {
         if (!this.isAtEnd()) this.current++;

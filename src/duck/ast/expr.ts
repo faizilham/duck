@@ -57,11 +57,11 @@ export namespace Expr {
         }
     }
 
-    export abstract class Visitor<T> {
-        abstract visitBinaryExpr(expr: Binary) : T;
-        abstract visitGroupingExpr(expr: Grouping) : T;
-        abstract visitLiteralExpr(expr: Literal) : T;
-        abstract visitUnaryExpr(expr: Unary) : T;
-        abstract visitVariableExpr(expr: Variable) : T;
+    export interface Visitor<T> {
+        visitBinaryExpr(expr: Binary) : T;
+        visitGroupingExpr(expr: Grouping) : T;
+        visitLiteralExpr(expr: Literal) : T;
+        visitUnaryExpr(expr: Unary) : T;
+        visitVariableExpr(expr: Variable) : T;
     }
 }

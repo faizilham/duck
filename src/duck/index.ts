@@ -35,17 +35,12 @@ export namespace Duck {
             process.exit(1);
         }
 
-        // for (let token of tokens){
-        //     console.log(token.stringify());
-        // }
-
         const parser = new Parser(tokens);
         try {
 
-            let expr = parser.parseExpr();
-            // console.log(JSON.stringify(expr, null, 2));
+            let statements = parser.parse();
             let printer = new ASTPrinter();
-            console.log(printer.print(expr));
+            console.log(printer.print(statements));
         } catch(e) {
             console.error("Error", e);
         }
