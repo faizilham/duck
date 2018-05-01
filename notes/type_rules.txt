@@ -1,0 +1,43 @@
+T :
+    number
+    bool
+    string
+    (T1, T2, ..., Tn) -> T
+
+// plus sign
+a + b :
+    [a] = [b] = [a + b] = number | 
+    [a] = [b] = [a + b] = string
+
+// other math operator
+op = + - * /
+a op b :
+    [a] = [b] = [a op b] = number
+
+// logical operator
+op = and or
+a lp b :
+    [a] = [b] = [a op b] = bool
+    
+// not operator
+not a : [a] = [not a] = bool
+
+// negative operator
+-a : [a] = [-a] = number
+
+// comparison
+cp = == <= >= > < !=
+a cp b:
+    [a] = [b] && [a cp b] = bool
+
+// assignment
+let a = E:
+    [a] = [E]
+
+// condition
+if (E) { S }:
+    [E] = bool
+
+// loop
+while (E) {S}:
+    [E] = bool

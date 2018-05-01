@@ -1,0 +1,18 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/node_modules": true
+    },
+    
+    "search.exclude": {
+        "tmp": true,
+        "dist": true,
+        "**/node_modules": true
+    },
+
+    "editor.wordWrap": "on"
+}

@@ -1,0 +1,52 @@
+DIGIT : (0-9)
+IDENTIFIER : [_a-zA-Z]+[_a-zA-Z0-9]+
+
+number : '-'? (DIGIT* '.')? DIGIT+
+bool : 'true' | 'false'
+string : '"' CHAR* '"'
+
+expr : logical
+logical : comparison (logical_op comparison)+
+logical_op : 'and' | 'or'
+
+comparison : binary comparison_op binary
+comparison_op : '==' | '<' | '>' | '<=' | '>=' | '!='
+
+binary : unary (binary_op unary)+
+binary_op : '+' | '-' | '*' | '/' 
+
+unary : unary_op+ primitive
+unary_op : 'not' | '-' 
+
+primitive : number | bool | string | IDENTIFIER (call | member)* | '(' expr ')'
+call : '(' (expr (',' expr)*)? ')'
+member : '.' IDENTIFIER (call | member)* 
+
+typename : 'Number' | 'String' | 'Bool' | func_type
+func_type : 'func' '(' type_list? ')' ':' typename
+type_list : typename (',' typename)*
+param_list : IDENTIFIER (',' IDENTIFIER)* ':' typename
+
+struct_decl : 'struct' IDENTIFIER '{' param_list+ '}'
+
+trait_decl : 'trait' IDENTIFIER '=' trait_init ( '+' trait_init)*
+trait_init : '{' (param_list | trait_function)+ '}' | IDENTIFIER
+
+trait_function : 'func' IDENTIFIER '(' type_list? ')' ':' typename
+
+func_decl : 'func' context? IDENTIFIER '(' param_list? ')' ':' typename block_stmt
+
+statement : var_decl | asssignment | while_stmt | if_stmt | trait_statement | func_decl | struct_decl | trait_decl
+
+var_decl : 'let' IDENTIFIER (':' typename)? ('=' expr)?
+
+asssignment : IDENTIFIER '=' expr
+
+block_stmt : '{' statement* '}' 
+
+while_stmt : 'while' expr block_stmt 
+
+if_stmt : 'if' expr block_stmt else_stmt?
+else_stmt: 'else' (if_stmt | block_stmt)
+
+program: statement*

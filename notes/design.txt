@@ -1,0 +1,164 @@
+types:
+    Number
+    String
+    Boolean
+    Array<T>          // later
+    Tuple<T1,T2,T3,*> // later
+    Struct
+    Enum
+    Function
+
+number : '-'? (DIGIT* '.')? DIGIT+
+    let n : number = 123
+    let n = 123
+
+    let n : number // defaults to 0
+
+bool : true | false
+    let b : bool = true
+    let b = true
+
+    let b : bool // defaults to false
+
+string : '"' CHAR* '"'
+    let s : string = "test"
+    let s = "test"
+
+    let s : string // defaults to ""
+
+tuple : < expression, (',' expression)*  >
+    <1> // type <number>
+    <1, 2.1> // type <number, number>
+    <1, "test"> // type <number, string>
+    <> // invalid
+
+    let tp : <number, string> = <12, "test">
+    let tp = <12, "test">
+    tp[0] == 12 // true
+    
+    let tp : <number, string> // defaults to <0, "">
+
+array : [ list? ]
+    [1,3,5] // array<number>
+    ["a", "b", "v"] // array<string>
+    [1, "a"] // invalid
+
+    let a : number[] = [1, 2]
+    a = [1, 2]
+
+    let a : number[] // defaults to []
+
+struct : { (key: value)* }
+    struct Point = {
+        x, y: number
+    }
+
+    let p : Point = Point{x: 0, y: 0}
+    let p = Point{} // defaults to Point {x: 0, y: 0}
+    let p : Point // defaults to Point {x: 0, y: 0}
+
+    struct Point3D = {
+        x, y, z: number
+    }
+
+    // Point is generic type of Point3D iff:
+    //  - members(Point) subset of members(Point3D)
+    //  - functions(Point) subset of functions(Point3D)
+
+    let p : Point = Point3D{} // valid
+    let p3 : Point3D = Point{} // invalid
+
+enum
+    
+    enum Optional(T) {
+        None,
+        Some(T)
+    }
+
+    enum Result(E,V) {
+        Err(E),
+        Ok(V)
+    }
+
+    func printResult(r : Result(string, number)){
+        match r {
+            case Err(e):
+                print("Error:", e)
+            case Ok(v):
+                print("Value is", v)
+        }
+    }
+
+
+    type Value = Nil | Int(number) | Str(string) | Bool(bool)
+
+    enum Value {
+        Nil
+        Int(number)
+        Str(string)
+        Bool(bool)
+    }
+
+    func getValue() : Value { ... }
+
+    if match Int(n) = getValue {
+        print(n + 2)
+    }
+
+    match  {
+        3 => ... // match exact value
+        Int(x) => ...
+        x => // default case & rebind to new variable
+        _ => // default case & no rebind
+    }
+
+
+function
+    func add (a, b: number) : number {
+        return a + b
+    }
+
+    print(add) // func (number, number) : number
+    print(print) // func(...Stringable)
+
+    let add = func (a, b: number) : number {
+        return a + b;
+    }
+
+trait
+    trait Stringable = {
+        func stringify () : string
+    }
+
+    trait Boundary = {
+        x, y, width, height: number
+    }
+
+    trait Drawable = {
+        func draw(Screen)
+    }
+
+    trait Clickable = {
+        func onClick()
+    }
+
+    trait Sprite = Drawable + Clickable + Boundary
+    // Sprite is a Drawable, a Clickable, and a Boundary
+
+    func (b : Boundary) contains(p : Point) : bool {
+        return p.x >= b.x && ...
+    }
+
+    let s : Stringable = "test" // valid
+    let s : Stringable // invalid, no default initial value
+
+    func (n : number) stringify() : string {
+        //...
+    }
+
+    func (self: Point) stringify() : string {
+        return self.x.stringify() + ", " + self.y.stringify()
+    }
+
+    (2).stringify()
+    Point{}.stringify()
