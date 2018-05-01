@@ -3,6 +3,7 @@ import { DuckType } from '../types';
 
 export abstract class Expr {
     public type? : DuckType;
+    public abstract accept<T>(visitor : Expr.Visitor<T>) : T;
 }
 
 export namespace Expr {
@@ -17,7 +18,7 @@ export namespace Expr {
     }
 
     export class Grouping extends Expr {
-        constructor(public expr: Expr) {
+        constructor(public inner: Expr) {
             super();
         }
 
@@ -37,7 +38,7 @@ export namespace Expr {
     }
 
     export class Unary extends Expr {
-        constructor(public operator: Token, public expr: Expr) {
+        constructor(public operator: Token, public right: Expr) {
             super();
         }
 

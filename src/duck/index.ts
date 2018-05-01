@@ -3,6 +3,7 @@ import * as util from "util";
 import {Lexer} from "./lexer";
 import {Parser} from "./parser";
 import {Reporter} from "./error";
+import { ASTPrinter } from "./astprinter";
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -42,7 +43,9 @@ export namespace Duck {
         try {
 
             let expr = parser.parseExpr();
-            console.log(JSON.stringify(expr, null, 2));
+            // console.log(JSON.stringify(expr, null, 2));
+            let printer = new ASTPrinter();
+            console.log(printer.print(expr));
         } catch(e) {
             console.error("Error", e);
         }

@@ -13,9 +13,9 @@ AST = {
         [
             
             "Binary     -> left: Expr, operator: Token, right: Expr",
-            "Grouping   -> expr: Expr",
+            "Grouping   -> inner: Expr",
             "Literal    -> value: any, type: DuckType",
-            "Unary      -> operator: Token, expr: Expr",
+            "Unary      -> operator: Token, right: Expr",
             "Variable   -> name: Token",
         ]
     ),
@@ -79,6 +79,8 @@ def define_ast(basename, imports, baseprops, type_data):
         writer.start_block("export abstract class {}".format(basename))
         for props in baseprops:
             writer.writeln("{};".format(props))
+
+        writer.writeln("public abstract accept<T>(visitor : {}.Visitor<T>) : T;".format(basename))
 
         writer.end_block()
         writer.writeln()
