@@ -4,7 +4,8 @@
   "description": "Duck Programming Language",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "sh ./duck tmp/test"
   },
   "repository": "https://gitlab.com/faizilham/duck.git",
   "author": "Faiz Ilham <faizilham.faizz@gmail.com>",

@@ -38,6 +38,8 @@ export class Lexer {
             this.scanToken();
         }
 
+        this.tokens.push(new Token(TokenType.EOF, "", null, null, this.line));
+        
         return this.tokens;        
     }
     

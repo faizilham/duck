@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as util from "util";
 import {Lexer} from "./lexer";
+import {Parser} from "./parser";
 import {Reporter} from "./error";
 
 const readFileAsync = util.promisify(fs.readFile);
@@ -30,8 +31,17 @@ export namespace Duck {
             process.exit(1);
         }
 
-        for (let token of tokens){
-            console.log(token.stringify());
+        // for (let token of tokens){
+        //     console.log(token.stringify());
+        // }
+
+        const parser = new Parser(tokens);
+        try {
+
+            let expr = parser.parseExpr();
+            console.log(JSON.stringify(expr, null, 2));
+        } catch(e) {
+            console.error("Error", e);
         }
     }
 }
