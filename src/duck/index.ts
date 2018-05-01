@@ -31,18 +31,14 @@ export namespace Duck {
 
         let tokens = lexer.scan();
 
-        if (Reporter.hasError){
-            process.exit(1);
-        }
+        if (Reporter.hasError) process.exit(1);
 
         const parser = new Parser(tokens);
-        try {
+        let statements = parser.parse();
 
-            let statements = parser.parse();
-            let printer = new ASTPrinter();
-            console.log(printer.print(statements));
-        } catch(e) {
-            console.error("Error", e);
-        }
+        if (Reporter.hasError) process.exit(1);        
+
+        let printer = new ASTPrinter();
+        console.log(printer.print(statements));
     }
 }

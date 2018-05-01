@@ -2,7 +2,7 @@ import {Token, TokenType} from "./token"
 import {DuckType} from "./types"
 import {Expr} from "./ast/expr"
 import {Stmt} from "./ast/stmt"
-
+import {Reporter} from "./error"
 
 export class ParserError {
     constructor(public token : Token, public message : string){}
@@ -24,7 +24,12 @@ export class Parser {
         let statements : Stmt[] = [];
         
         while(!this.isAtEnd()){
-            statements.push(this.declaration());
+            try {
+                statements.push(this.declaration());
+            } catch(err){
+                Reporter.report(err.token.line, err.message);
+                this.synchronize();
+            }
         }
 
         return statements
@@ -52,7 +57,7 @@ export class Parser {
         if (variable instanceof Expr.Variable){
             return new Stmt.Assignment(variable.name, expr);
         } else {
-            throw this.error(token, "Invalide assignment target");
+            throw this.error(token, "Invalid assignment target");
         }
     }
 
@@ -234,5 +239,26 @@ export class Parser {
 
     private error(token : Token, message : string) : ParserError{
         return new ParserError(token, message);
+    }
+
+    private synchronize() {
+        this.advance();
+
+        while (!this.isAtEnd()){
+            if (this.previous().tokenType == TokenType.SEMICOLON)
+                return;
+            
+                switch(this.peek().tokenType){
+                    case TokenType.LET:
+                    case TokenType.IF:
+                    case TokenType.WHILE:
+                    case TokenType.PRINT:
+                        return;
+                    
+                    default:
+                }
+
+                this.advance();
+        }
     }
 }

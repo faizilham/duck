@@ -81,7 +81,7 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     visitBinaryExpr(expr: Expr.Binary): string {
         let left = expr.left.accept(this);
         let right = expr.right.accept(this);
-        return `${left} ${expr.operator.lexeme} ${right}`;
+        return `(${left} ${expr.operator.lexeme} ${right})`;
     }
 
     visitGroupingExpr(expr: Expr.Grouping): string {
