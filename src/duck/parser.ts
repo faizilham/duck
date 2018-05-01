@@ -92,6 +92,7 @@ export class Parser {
     }
 
     private ifStatement() : Stmt {
+        let token = this.previous();
         let condition = this.expression();
 
         this.consume(TokenType.LEFT_BRACE, "Expect '{' after if condition");
@@ -108,16 +109,17 @@ export class Parser {
             }
         }
 
-        return new Stmt.If(condition, thenBranch, elseBranch);
+        return new Stmt.If(token, condition, thenBranch, elseBranch);
     }
 
     private whileStatement() : Stmt {
+        let token = this.previous();
         let condition = this.expression();
 
         this.consume(TokenType.LEFT_BRACE, "Expect '{' after loop condition");
         let body = this.blockStatement();
 
-        return new Stmt.While(condition, body);
+        return new Stmt.While(token, condition, body);
     }
 
     private varDeclaration() : Stmt {

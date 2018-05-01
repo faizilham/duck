@@ -7,9 +7,7 @@ AST = {
             ("Token", "../token"),
             ("DuckType", "../types"),
         ],
-        [
-            "public type? : DuckType"
-        ],
+        [],
         [
             
             "Binary     -> left: Expr, operator: Token, right: Expr",
@@ -41,8 +39,8 @@ AST = {
             "Assignment -> name: Token, expr: Expr",
             "Block      -> statements: Stmt[]",
             "Expression -> expr: Expr",
-            "If         -> condition: Expr, thenBranch: Stmt, elseBranch?: Stmt",
-            "While      -> condition: Expr, body: Stmt",
+            "If         -> token: Token, condition: Expr, thenBranch: Stmt, elseBranch?: Stmt",
+            "While      -> token: Token, condition: Expr, body: Stmt",
             "VarDecl    -> name: Token, typeExpr?: TypeExpr, expr?: Expr",
         ]
     ),

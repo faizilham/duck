@@ -32,7 +32,7 @@ export enum TokenType {
 }
 
 export class Token {
-    constructor(public tokenType : TokenType, public lexeme : string, public line : Number, public literal? : any, public literalType? : DuckType) {}
+    constructor(public tokenType : TokenType, public lexeme : string, public line : number, public literal? : any, public literalType? : DuckType) {}
 
     public stringify() : string {
         let type = (this.literalType === undefined) ?

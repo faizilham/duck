@@ -2,7 +2,6 @@ import { Token } from '../token';
 import { DuckType } from '../types';
 
 export abstract class Expr {
-    public type? : DuckType;
     public abstract accept<T>(visitor : Expr.Visitor<T>) : T;
 }
 

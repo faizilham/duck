@@ -38,7 +38,7 @@ export namespace Stmt {
     }
 
     export class If extends Stmt {
-        constructor(public condition: Expr, public thenBranch: Stmt, public elseBranch?: Stmt) {
+        constructor(public token: Token, public condition: Expr, public thenBranch: Stmt, public elseBranch?: Stmt) {
             super();
         }
 
@@ -48,7 +48,7 @@ export namespace Stmt {
     }
 
     export class While extends Stmt {
-        constructor(public condition: Expr, public body: Stmt) {
+        constructor(public token: Token, public condition: Expr, public body: Stmt) {
             super();
         }
 

@@ -4,6 +4,7 @@ import {Lexer} from "./lexer";
 import {Parser} from "./parser";
 import {Reporter} from "./error";
 import { ASTPrinter } from "./astprinter";
+import { Resolver } from "./resolver";
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -37,6 +38,11 @@ export namespace Duck {
         let statements = parser.parse();
 
         if (Reporter.hasError) process.exit(1);        
+
+        let resolver = new Resolver();
+        resolver.resolve(statements);
+        
+        if (Reporter.hasError) process.exit(1);
 
         let printer = new ASTPrinter();
         console.log(printer.print(statements));
