@@ -1,5 +1,5 @@
 export enum DuckType {
-    Number,
+    Number = 1,
     String,
     Bool
 }

@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
+    "generate": "python tools/genast.py",
     "test": "sh ./duck tmp/test"
   },
   "repository": "https://gitlab.com/faizilham/duck.git",

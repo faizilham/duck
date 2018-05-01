@@ -2,6 +2,8 @@ import {DuckType} from "./types"
 import { Duck } from ".";
 
 export enum TokenType {
+    EOF,
+
     // Delimiters
     COMMA, DOT,
 
@@ -24,8 +26,6 @@ export enum TokenType {
     // Keywords
     IF, ELSE, WHILE, LET,
     PRINT, // temporarily, later will changed to standard lib function
-
-    EOF
 }
 
 export class Token {

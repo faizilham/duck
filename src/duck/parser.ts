@@ -17,9 +17,7 @@ const BinaryPrecedences = [
 export class Parser {
     private current = 0;
 
-    constructor(private tokens : Token[]){
-
-    }
+    constructor(private tokens : Token[]){}
 
     public parseExpr() : Expr{
         return this.expression();
@@ -63,13 +61,15 @@ export class Parser {
             return new Expr.Literal(token.literal, token.literalType);            
         }
 
-        // TODO: match identifier
+        if (this.match(TokenType.IDENTIFIER)){
+            return new Expr.Variable(this.previous());
+        }
 
         if (this.match(TokenType.LEFT_PAREN)){
             let expr = this.expression();
 
             this.consume(TokenType.RIGHT_PAREN, "Expect ')' after expression");
-            return expr; // TODO: change to grouping
+            return new Expr.Grouping(expr);
         }
         
         throw this.error(this.peek(), "Expect expression.");
