@@ -83,9 +83,9 @@ enum
     func printResult(r : Result(string, number)){
         match r {
             case Err(e):
-                print("Error:", e)
+                print("Error:", e);
             case Ok(v):
-                print("Value is", v)
+                print("Value is", v);
         }
     }
 
@@ -93,16 +93,16 @@ enum
     type Value = Nil | Int(number) | Str(string) | Bool(bool)
 
     enum Value {
-        Nil
-        Int(number)
-        Str(string)
+        Nil,
+        Int(number),
+        Str(string),
         Bool(bool)
     }
 
     func getValue() : Value { ... }
 
     if match Int(n) = getValue {
-        print(n + 2)
+        print(n + 2);
     }
 
     match  {
@@ -115,7 +115,7 @@ enum
 
 function
     func add (a, b: number) : number {
-        return a + b
+        return a + b;
     }
 
     print(add) // func (number, number) : number
@@ -126,24 +126,29 @@ function
     }
 
 trait
-    trait Stringable = {
+    trait Stringable {
         func stringify () : string
     }
 
-    trait Boundary = {
+    trait Boundary {
         x, y, width, height: number
     }
 
-    trait Drawable = {
+    trait Drawable {
         func draw(Screen)
     }
 
-    trait Clickable = {
+    trait Clickable {
         func onClick()
     }
 
-    trait Sprite = Drawable + Clickable + Boundary
+    trait Sprite : Drawable, Clickable, Boundary
     // Sprite is a Drawable, a Clickable, and a Boundary
+
+    trait Button : Drawable, Clickable {
+        func onHover()
+    }
+    // Button is a Drawable and a Clickable dan have onHover method
 
     func (b : Boundary) contains(p : Point) : bool {
         return p.x >= b.x && ...
