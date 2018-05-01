@@ -29,9 +29,13 @@ export enum TokenType {
 }
 
 export class Token {
-    constructor(public tokenType : TokenType, public lexeme : string, public literal : any, public literalType : DuckType, public line : Number) {}
+    constructor(public tokenType : TokenType, public lexeme : string, public line : Number, public literal? : any, public literalType? : DuckType) {}
 
     public stringify() : string {
-        return `Token(${TokenType[this.tokenType]}, '${this.lexeme}', ${this.literal}, ${DuckType[this.literalType] || null}, ${this.line})`;
+        let type = (this.literalType === undefined) ?
+            null :
+            DuckType[<DuckType>this.literalType]
+        ;
+        return `Token(${TokenType[this.tokenType]}, '${this.lexeme}', ${this.literal}, ${type}, ${this.line})`;
     }
 }

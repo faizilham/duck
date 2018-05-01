@@ -8,7 +8,7 @@ AST = {
             ("DuckType", "../types")
         ],
         [
-            "public type : DuckType = null"
+            "public type? : DuckType"
         ],
         [
             

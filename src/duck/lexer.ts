@@ -2,7 +2,7 @@ import {Token, TokenType} from "./token"
 import {DuckType} from "./types"
 import {Reporter} from "./error"
 
-const ReservedWords = {
+const ReservedWords : any = {
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
 
@@ -15,14 +15,14 @@ const ReservedWords = {
 
     "let": TokenType.LET,
     "print": TokenType.PRINT, // temporarily
-}
+};
 
 export class Lexer {
-    private current : number;
-    private start : number;
-    private line : number;
+    private current : number = 0;
+    private start : number = 0;
+    private line : number = 0;
     private source : string;
-    private tokens : Array<Token>;
+    private tokens : Array<Token> = [];
 
     constructor(source : string){
         this.source = source;
@@ -38,7 +38,7 @@ export class Lexer {
             this.scanToken();
         }
 
-        this.tokens.push(new Token(TokenType.EOF, "", null, null, this.line));
+        this.tokens.push(new Token(TokenType.EOF, "", this.line));
         
         return this.tokens;        
     }
@@ -139,8 +139,8 @@ export class Lexer {
             this.advance();
         }
 
-        let id = this.source.substring(this.start, this.current);
-        let token_type = ReservedWords[id] || TokenType.IDENTIFIER;
+        let id : string = this.source.substring(this.start, this.current);
+        let token_type : TokenType = ReservedWords[id] || TokenType.IDENTIFIER;
 
         switch(token_type){
             case TokenType.TRUE: this.addToken(token_type, true, DuckType.Bool); break;
@@ -197,9 +197,9 @@ export class Lexer {
         return !!char.match(/[_a-zA-Z0-9]/);
     }
 
-    private addToken(tokenType : TokenType, literal : any = null, literalType : DuckType = null){
+    private addToken(tokenType : TokenType, literal? : any, literalType? : DuckType){
         const lexeme = this.source.substring(this.start, this.current);
-        this.tokens.push(new Token(tokenType, lexeme, literal, literalType, this.line));
+        this.tokens.push(new Token(tokenType, lexeme, this.line, literal, literalType));
     }
 
     private error(message : string){

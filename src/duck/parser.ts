@@ -58,7 +58,7 @@ export class Parser {
     private primary() : Expr {
         if (this.match(TokenType.FALSE) || this.match(TokenType.TRUE) || this.match(TokenType.NUMBER) || this.match(TokenType.STRING)){
             let token = this.previous();
-            return new Expr.Literal(token.literal, token.literalType);            
+            return new Expr.Literal(token.literal, <DuckType>token.literalType);            
         }
 
         if (this.match(TokenType.IDENTIFIER)){

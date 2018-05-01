@@ -2,7 +2,7 @@ import { Token } from '../token';
 import { DuckType } from '../types';
 
 export abstract class Expr {
-    public type : DuckType = null;
+    public type? : DuckType;
 }
 
 export namespace Expr {

@@ -1,12 +1,8 @@
 export class ErrHandler {
-    public hasError : boolean;
-    private static reporter = null;
+    public hasError = false;
+    private static reporter = new ErrHandler();
 
     public static getReporter() : ErrHandler {
-        if (!ErrHandler.reporter){
-            ErrHandler.reporter = new ErrHandler();
-        }
-
         return ErrHandler.reporter;
     }
 

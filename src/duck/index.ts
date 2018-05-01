@@ -8,17 +8,20 @@ const readFileAsync = util.promisify(fs.readFile);
 
 export namespace Duck {
     export async function runFile(filename : string){
-        const contents = await readFile(filename);
-
-        run(contents);
+        try {
+            const contents = await readFile(filename);
+            run(contents);
+        } catch(e){
+            console.error(e);
+            process.exit(1);
+        }
     }
 
-    async function readFile(filename : string): Promise<string>{
+    async function readFile(filename : string) : Promise<string>{
         try {
             return (await readFileAsync(filename)).toString();
         } catch(e) {
-            console.error(`Error: File '${filename}' not found`);
-            process.exit(1);
+            throw `Error: File '${filename}' not found`;
         }
     }
 
