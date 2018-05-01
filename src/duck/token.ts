@@ -5,7 +5,7 @@ export enum TokenType {
     EOF,
 
     // Delimiters
-    SEMICOLON, COMMA, DOT,
+    SEMICOLON, COMMA, DOT, COLON,
 
     // Parentheses
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
@@ -22,6 +22,9 @@ export enum TokenType {
     // Literals
     IDENTIFIER, STRING, NUMBER,
     TRUE, FALSE,
+
+    // Basic types
+    TYPE_NUMBER, TYPE_STRING, TYPE_BOOL,
 
     // Keywords
     IF, ELSE, WHILE, LET,

@@ -1,6 +1,7 @@
 import {Token, TokenType} from "./token"
 import {DuckType} from "./types"
 import {Expr} from "./ast/expr"
+import {TypeExpr} from "./ast/typeexpr"
 import {Stmt} from "./ast/stmt"
 import {Reporter} from "./error"
 
@@ -36,9 +37,10 @@ export class Parser {
     }
 
     private declaration() : Stmt {
+        // TODO: whether only function and declaration at top?
         if (this.match(TokenType.LET)) return this.varDeclaration();
 
-        return this.statement(); // TODO: try catch synchronize & 
+        return this.statement(); 
     }
 
     private statement() : Stmt {
@@ -52,13 +54,14 @@ export class Parser {
     private assignment(variable : Expr) : Stmt {
         let token = this.previous();
         let expr = this.expression();
+
+        if (!(variable instanceof Expr.Variable)){
+            throw this.error(token, "Invalid assignment target");            
+        }
+
         this.consume(TokenType.SEMICOLON, "Expect ';' after expression");
 
-        if (variable instanceof Expr.Variable){
-            return new Stmt.Assignment(variable.name, expr);
-        } else {
-            throw this.error(token, "Invalid assignment target");
-        }
+        return new Stmt.Assignment(variable.name, expr);
     }
 
     private block(): Stmt[] {
@@ -120,20 +123,38 @@ export class Parser {
     private varDeclaration() : Stmt {
         let name = this.consume(TokenType.IDENTIFIER, "Expect a variable name");
 
+        let typeDefinition;
+
+        if (this.match(TokenType.COLON)){
+            typeDefinition = this.typeExpression();
+        }
+
         let initializer;
 
         if (this.match(TokenType.EQUAL)){
             initializer = this.expression();
         }
 
-        this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");
-        return new Stmt.VarDecl(name, initializer);
+        if (!typeDefinition && !initializer){
+            throw this.error(this.previous(), "Variable declaration have to be typed if not initialized");
+        }
+
+        this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");        
+
+        return new Stmt.VarDecl(name, typeDefinition, initializer);
+    }
+
+
+    private typeExpression() : TypeExpr {
+        if (this.match(TokenType.TYPE_BOOL, TokenType.TYPE_NUMBER, TokenType.TYPE_STRING)){
+            let token = this.previous();
+            return new TypeExpr.Basic(token, <DuckType>token.literalType);            
+        }
+        
+        throw this.error(this.peek(), "Expect type.");        
     }
 
     /*** Expression Parsing ***/
-    private parseExpr() : Expr{
-        return this.expression();
-    }
 
     private expression() : Expr {
         return this.binary(0);
@@ -168,7 +189,7 @@ export class Parser {
     }
 
     private primary() : Expr {
-        if (this.match(TokenType.FALSE) || this.match(TokenType.TRUE) || this.match(TokenType.NUMBER) || this.match(TokenType.STRING)){
+        if (this.match(TokenType.FALSE, TokenType.TRUE, TokenType.NUMBER, TokenType.STRING)){
             let token = this.previous();
             return new Expr.Literal(token.literal, <DuckType>token.literalType);            
         }
@@ -242,7 +263,7 @@ export class Parser {
     }
 
     private synchronize() {
-        this.advance();
+        // this.advance();
 
         while (!this.isAtEnd()){
             if (this.previous().tokenType == TokenType.SEMICOLON)

@@ -5,5 +5,5 @@ export enum DuckType {
 }
 
 export namespace DuckType{
-    
+
 }

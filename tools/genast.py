@@ -5,7 +5,7 @@ AST = {
     "Expr": (
         [ 
             ("Token", "../token"),
-            ("DuckType", "../types")
+            ("DuckType", "../types"),
         ],
         [
             "public type? : DuckType"
@@ -19,10 +19,21 @@ AST = {
             "Variable   -> name: Token",
         ]
     ),
+    "TypeExpr": (
+        [ 
+            ("Token", "../token"),
+            ("DuckType", "../types"),
+        ],
+        [],
+        [   
+            "Basic      -> typeExpr: Token, type: DuckType"
+        ]
+    ),
     "Stmt": (
         [ 
             ("Token", "../token"),
-            ("Expr", "./expr")
+            ("Expr", "./expr"),
+            ("TypeExpr", "./typeexpr"),
         ],
         [],
         [
@@ -32,7 +43,7 @@ AST = {
             "Expression -> expr: Expr",
             "If         -> condition: Expr, thenBranch: Stmt, elseBranch?: Stmt",
             "While      -> condition: Expr, body: Stmt",
-            "VarDecl    -> name: Token, expr?: Expr",
+            "VarDecl    -> name: Token, typeExpr?: TypeExpr, expr?: Expr",
         ]
     ),
 }

@@ -13,6 +13,10 @@ const ReservedWords : any = {
     "and": TokenType.AND,
     "or": TokenType.OR,
 
+    "number": TokenType.TYPE_NUMBER,
+    "string": TokenType.TYPE_STRING,
+    "bool": TokenType.TYPE_BOOL,
+
     "let": TokenType.LET,
     "print": TokenType.PRINT, // temporarily
 };
@@ -52,6 +56,7 @@ export class Lexer {
             case ';': this.addToken(TokenType.SEMICOLON); break;
             case ',': this.addToken(TokenType.COMMA); break;
             case '.': this.addToken(TokenType.DOT); break;
+            case ':': this.addToken(TokenType.COLON); break;
 
             // parentheses
             case '(': this.addToken(TokenType.LEFT_PAREN); break;
@@ -146,6 +151,11 @@ export class Lexer {
         switch(token_type){
             case TokenType.TRUE: this.addToken(token_type, true, DuckType.Bool); break;
             case TokenType.FALSE: this.addToken(token_type, false, DuckType.Bool); break;
+
+            case TokenType.TYPE_NUMBER: this.addToken(token_type, null, DuckType.Number); break;
+            case TokenType.TYPE_BOOL: this.addToken(token_type, null, DuckType.Bool); break;
+            case TokenType.TYPE_STRING: this.addToken(token_type, null, DuckType.String); break;
+
             default: this.addToken(token_type);
         }
     }

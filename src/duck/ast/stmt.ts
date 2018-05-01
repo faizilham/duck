@@ -1,5 +1,6 @@
 import { Token } from '../token';
 import { Expr } from './expr';
+import { TypeExpr } from './typeexpr';
 
 export abstract class Stmt {
     public abstract accept<T>(visitor : Stmt.Visitor<T>) : T;
@@ -57,7 +58,7 @@ export namespace Stmt {
     }
 
     export class VarDecl extends Stmt {
-        constructor(public name: Token, public expr?: Expr) {
+        constructor(public name: Token, public typeExpr?: TypeExpr, public expr?: Expr) {
             super();
         }
 
