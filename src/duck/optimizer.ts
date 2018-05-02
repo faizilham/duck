@@ -3,48 +3,94 @@ import {Stmt} from "./ast/stmt"
 import {TokenType, Token} from "./token"
 import { DuckType } from "./types";
 
-export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<void> {
+export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefined> {
 
-    public optimize(statements : Stmt[]){
+    public optimize(statements : Stmt[]) : Stmt[]{
+        let optimized : Stmt[] = [];
+
         for (let statement of statements){
             try {
-                statement.accept(this);
+                let opt = statement.accept(this);
+                if (opt) optimized.push(opt);
             } catch(e){}
         }
+
+        return optimized;
     }
 
     /** Statement Visitor */
 
-    visitAssignmentStmt(stmt: Stmt.Assignment): void {
+    visitAssignmentStmt(stmt: Stmt.Assignment): Stmt | undefined {
         stmt.expr = this.cleanGrouping(stmt.expr.accept(this));
+        return stmt;
     }
 
-    visitBlockStmt(stmt: Stmt.Block): void {
+    visitBlockStmt(stmt: Stmt.Block): Stmt | undefined {
+        let optimized : Stmt[] = [];
+
         for (let statement of stmt.statements){
-            statement.accept(this);
+            let opt = statement.accept(this);
+            if (opt) optimized.push(opt);
         }
+
+        if (optimized.length === 0){ // remove empty block
+            return;
+        } else if (optimized.length === 1 && optimized[0] instanceof Stmt.Block){ 
+            // unbox block inside block without any other statement
+            return optimized[0];
+        }
+
+        stmt.statements = optimized;
+
+        return stmt;
     }
 
-    visitExpressionStmt(stmt: Stmt.Expression): void {
+    visitExpressionStmt(stmt: Stmt.Expression): Stmt | undefined {
         stmt.expr = this.cleanGrouping(stmt.expr.accept(this));
+        return stmt;
     }
 
-    visitIfStmt(stmt: Stmt.If): void {
+    visitIfStmt(stmt: Stmt.If): Stmt | undefined {
         stmt.condition = this.cleanGrouping(stmt.condition.accept(this));
+
+        // return the right branch if condition is literal false or true
+        if ((stmt.condition instanceof Expr.Literal)){
+            if (stmt.condition.value === false){
+                if (!stmt.elseBranch) return;
+                return stmt.elseBranch.accept(this);
+            } else if (stmt.condition.value === true){
+                return stmt.thenBranch.accept(this);
+            }
+        }
+
         stmt.thenBranch.accept(this);
 
-        if (stmt.elseBranch) stmt.elseBranch.accept(this);
+        if (stmt.elseBranch) {
+            stmt.elseBranch = stmt.elseBranch.accept(this); // remove else if empty / not other if
+        }
+
+        return stmt;
     }
 
-    visitWhileStmt(stmt: Stmt.While): void {
+    visitWhileStmt(stmt: Stmt.While): Stmt | undefined {
         stmt.condition = this.cleanGrouping(stmt.condition.accept(this));
+
+        // remove loop if literal false
+        if ((stmt.condition instanceof Expr.Literal) && stmt.condition.value === false){
+            return;
+        }
+
         stmt.body.accept(this);
+
+        return stmt;
     }
 
-    visitVarDeclStmt(stmt: Stmt.VarDecl): void {
+    visitVarDeclStmt(stmt: Stmt.VarDecl): Stmt | undefined {
         if (stmt.expr) {
             stmt.expr = this.cleanGrouping(stmt.expr.accept(this));
         }
+
+        return stmt;
     }
 
     cleanGrouping(expr : Expr) : Expr{

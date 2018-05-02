@@ -46,7 +46,7 @@ export namespace Duck {
         if (Reporter.hasError) process.exit(1);
 
         let optimizer = new Optimizer();
-        optimizer.optimize(statements);
+        statements = optimizer.optimize(statements);
 
         if (Reporter.hasError) process.exit(1);        
 
