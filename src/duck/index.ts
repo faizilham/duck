@@ -5,6 +5,7 @@ import {Parser} from "./parser";
 import {Reporter} from "./error";
 import { ASTPrinter } from "./astprinter";
 import { Resolver } from "./resolver";
+import { Optimizer } from "./optimizer";
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -43,6 +44,11 @@ export namespace Duck {
         resolver.resolve(statements);
         
         if (Reporter.hasError) process.exit(1);
+
+        let optimizer = new Optimizer();
+        optimizer.optimize(statements);
+
+        if (Reporter.hasError) process.exit(1);        
 
         let printer = new ASTPrinter();
         console.log(printer.print(statements));

@@ -90,7 +90,7 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     visitIndexingExpr(expr: Expr.Indexing): string {
         let collection = expr.collection.accept(this);
         let index = expr.index.accept(this);
-        return `__get(${collection}, ${index})`;        
+        return `${collection}[${index}]`;        
     }
 
     visitLiteralExpr(expr: Expr.Literal): string {

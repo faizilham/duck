@@ -204,7 +204,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
     }
 
     visitGroupingExpr(expr: Expr.Grouping): DuckType {
-        return expr.accept(this);
+        return expr.inner.accept(this);
     }
 
     visitIndexingExpr(expr: Expr.Indexing): DuckType {
