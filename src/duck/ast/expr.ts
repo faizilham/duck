@@ -36,6 +36,16 @@ export namespace Expr {
         }
     }
 
+    export class List extends Expr {
+        constructor(public token: Token, public elements: Expr[]) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitListExpr(this);
+        }
+    }
+
     export class Unary extends Expr {
         constructor(public operator: Token, public right: Expr) {
             super();
@@ -60,6 +70,7 @@ export namespace Expr {
         visitBinaryExpr(expr: Binary) : T;
         visitGroupingExpr(expr: Grouping) : T;
         visitLiteralExpr(expr: Literal) : T;
+        visitListExpr(expr: List) : T;
         visitUnaryExpr(expr: Unary) : T;
         visitVariableExpr(expr: Variable) : T;
     }

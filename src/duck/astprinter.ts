@@ -92,6 +92,11 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         return `${expr.value}`;
     }
 
+    visitListExpr(expr: Expr.List): string{
+        let elements = expr.elements.map(e => e.accept(this)).join(", ");
+        return `[${elements}]`;
+    }
+
     visitUnaryExpr(expr: Expr.Unary): string {
         return `${expr.operator.lexeme}${expr.right.accept(this)}`
     }

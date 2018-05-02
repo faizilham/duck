@@ -57,18 +57,22 @@ export namespace DuckType{
     export class List implements DuckType {
         public readonly type : Type = Type.List;
 
-        constructor(public readonly elementType: DuckType){}
+        constructor(public readonly elementType?: DuckType){}
 
         public contains(d : DuckType) : boolean {
-            if (d instanceof List){
-                return this.elementType.contains(d.elementType);
+            if (!(d instanceof List)){
+                return false;
             }
 
-            return false;
+            if (!this.elementType || !d.elementType){
+                return false;
+            }
+
+            return this.elementType.contains(d.elementType);
         }
 
         public toString() : string{
-            return this.elementType.toString() + "[]";
+            return this.elementType ? this.elementType.toString() + "[]" : "[]";
         }
     }
 }

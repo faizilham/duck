@@ -13,6 +13,7 @@ AST = {
             "Binary     -> left: Expr, operator: Token, right: Expr",
             "Grouping   -> inner: Expr",
             "Literal    -> value: any, type: DuckType",
+            "List       -> token: Token, elements: Expr[]",
             "Unary      -> operator: Token, right: Expr",
             "Variable   -> name: Token",
         ]
@@ -24,7 +25,8 @@ AST = {
         ],
         [],
         [   
-            "Basic      -> typeExpr: Token, type: DuckType"
+            "Basic      -> typeExpr: Token, type: DuckType",
+            "List       -> typeExpr: Token, element: TypeExpr"
         ]
     ),
     "Stmt": (

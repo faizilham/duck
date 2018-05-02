@@ -8,6 +8,7 @@ export enum TokenType {
 
     // Parentheses
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
+    LEFT_SQUARE, RIGHT_SQUARE,
 
     // Arithmetics and Logics Operator
     PLUS, MINUS, STAR, SLASH, AND, OR,

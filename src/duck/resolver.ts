@@ -115,10 +115,13 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         if (stmt.typeExpr){
             typeExpr = stmt.typeExpr.accept(this);
 
-            if (expr && typeExpr !== expr){
+            if (expr && !typeExpr.contains(expr)){
                 throw this.error(stmt.name, `Unmatched declared and initiated type: ${typeExpr} and ${expr}`);
             }
         }
+
+        // TODO: merge declared X[] with assigned null []
+        // also handle: X[][] assigned with []
 
         let type = expr || typeExpr;
         if (!type) throw this.error(stmt.name, "Unknown variable type");
@@ -133,6 +136,10 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
     /** TypeExpression Visitor */
     visitBasicTypeExpr(typeexpr: TypeExpr.Basic): DuckType {
         return typeexpr.type;
+    }
+
+    visitListTypeExpr(typeexpr: TypeExpr.List): DuckType {
+        return new DuckType.List(typeexpr.element.accept(this));
     }
 
     /** Expression Visitor */
@@ -184,6 +191,30 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
     visitLiteralExpr(expr: Expr.Literal): DuckType {
         return expr.type;
+    }
+
+    visitListExpr(expr: Expr.List): DuckType{
+        let elementType;
+
+        let i = 0;
+        for (let element of expr.elements){
+            let type = element.accept(this);
+            
+            // TODO: merge X[] with a null []
+            // also handle X[][] with a null []
+            // also handle if null [] appears as first element
+
+            if (!elementType || type.contains(elementType)){
+                elementType = type;
+            } else if (!elementType.contains(type)){
+                throw this.error(expr.token, `Unmatch element type #${i} ${type} from element type #0 ${elementType}`);
+            }
+
+            
+            i++;
+        }
+
+        return new DuckType.List(elementType);
     }
 
     visitUnaryExpr(expr: Expr.Unary): DuckType {

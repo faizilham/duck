@@ -18,7 +18,8 @@ binary_op : '+' | '-' | '*' | '/'
 unary : unary_op+ primitive
 unary_op : 'not' | '-' 
 
-primitive : number | bool | string | IDENTIFIER (call | member)* | '(' expr ')'
+primitive : number | bool | string | list | IDENTIFIER (call | member)* | '(' expr ')'
+list : '[' (expr (',' expr)*)? ']'
 call : '(' (expr (',' expr)*)? ')'
 member : '.' IDENTIFIER (call | member)* 
 

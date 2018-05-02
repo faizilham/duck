@@ -148,12 +148,24 @@ export class Parser {
 
 
     private typeExpression() : TypeExpr {
+        let texpr: TypeExpr | undefined;
+
         if (this.match(TokenType.TYPE_BOOL, TokenType.TYPE_NUMBER, TokenType.TYPE_STRING)){
             let token = this.previous();
-            return new TypeExpr.Basic(token, <DuckType>token.literalType);            
+            texpr = new TypeExpr.Basic(token, <DuckType>token.literalType);
         }
         
-        throw this.error(this.peek(), "Expect type.");        
+        if (!texpr){
+            throw this.error(this.peek(), "Expect type.");
+        }
+
+        // match array types
+        while(this.match(TokenType.LEFT_SQUARE)){
+            this.consume(TokenType.RIGHT_SQUARE, "Expect ']'");
+            texpr = new TypeExpr.List(this.previous(), texpr);
+        }
+
+        return texpr;
     }
 
     /*** Expression Parsing ***/
@@ -200,6 +212,10 @@ export class Parser {
             return new Expr.Variable(this.previous());
         }
 
+        if (this.match(TokenType.LEFT_SQUARE)){
+            return this.list();
+        }
+
         if (this.match(TokenType.LEFT_PAREN)){
             let expr = this.expression();
 
@@ -208,6 +224,21 @@ export class Parser {
         }
         
         throw this.error(this.peek(), "Expect expression.");
+    }
+
+    private list() : Expr {
+        let token = this.previous();
+        let elements : Expr[] = [];
+
+        if (this.peek().tokenType !== TokenType.RIGHT_SQUARE){
+            do {
+                elements.push(this.expression());
+            } while (this.match(TokenType.COMMA));
+        }
+
+        this.consume(TokenType.RIGHT_SQUARE, "Expect ']'");
+        
+        return new Expr.List(token, elements);
     }
 
     /*** Parsing Primitives ***/
