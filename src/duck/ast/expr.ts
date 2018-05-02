@@ -26,6 +26,16 @@ export namespace Expr {
         }
     }
 
+    export class Indexing extends Expr {
+        constructor(public token: Token, public collection: Expr, public index: Expr) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitIndexingExpr(this);
+        }
+    }
+
     export class Literal extends Expr {
         constructor(public value: any, public type: DuckType) {
             super();
@@ -69,6 +79,7 @@ export namespace Expr {
     export interface Visitor<T> {
         visitBinaryExpr(expr: Binary) : T;
         visitGroupingExpr(expr: Grouping) : T;
+        visitIndexingExpr(expr: Indexing) : T;
         visitLiteralExpr(expr: Literal) : T;
         visitListExpr(expr: List) : T;
         visitUnaryExpr(expr: Unary) : T;

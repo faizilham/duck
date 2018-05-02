@@ -188,11 +188,31 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         return expr.accept(this);
     }
 
+    visitIndexingExpr(expr: Expr.Indexing): DuckType {
+        let collection = expr.collection.accept(this);
+
+        if (!(collection instanceof DuckType.List)){
+            throw this.error(expr.token, `Unknown operator[] for type ${collection}`);
+        }
+
+        if (!collection.elementType){
+            throw this.error(expr.token, `Unknown type ${collection}`);            
+        }
+
+        let index = expr.index.accept(this);
+
+        if (!DuckType.Number.contains(index)){
+            throw this.error(expr.token, `Can't use type ${collection} as index`);
+        }
+        
+        return collection.elementType;
+    }
+
     visitLiteralExpr(expr: Expr.Literal): DuckType {
         return expr.type;
     }
 
-    visitListExpr(expr: Expr.List): DuckType{
+    visitListExpr(expr: Expr.List): DuckType {
         let elementType;
 
         let i = 0;

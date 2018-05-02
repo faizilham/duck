@@ -12,6 +12,7 @@ AST = {
             
             "Binary     -> left: Expr, operator: Token, right: Expr",
             "Grouping   -> inner: Expr",
+            "Indexing   -> token: Token, collection: Expr, index: Expr",
             "Literal    -> value: any, type: DuckType",
             "List       -> token: Token, elements: Expr[]",
             "Unary      -> operator: Token, right: Expr",

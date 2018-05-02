@@ -2,7 +2,6 @@ import { Expr } from "./ast/expr"
 import { Stmt } from "./ast/stmt";
 
 export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
-
     private currentBlock = 0;
 
     public print (statements : Stmt[] ) : string {
@@ -23,7 +22,7 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     
     visitAssignmentStmt(stmt: Stmt.Assignment): string {
         let expr = stmt.expr.accept(this);
-        return `${stmt.name.lexeme} = ${expr}`;
+        return `${stmt.name.lexeme} = ${expr};`;
     }
 
     visitBlockStmt(stmt: Stmt.Block): string {
@@ -41,7 +40,7 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     }
 
     visitExpressionStmt(stmt: Stmt.Expression): string {
-        return stmt.expr.accept(this);
+        return stmt.expr.accept(this) + ";";
     }
 
     visitIfStmt(stmt: Stmt.If): string {
@@ -73,7 +72,7 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
             result += " = " + stmt.expr.accept(this);
         }
 
-        return result;
+        return result + ";";
     }
 
     // Expr.Visitor implementation
@@ -81,11 +80,17 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     visitBinaryExpr(expr: Expr.Binary): string {
         let left = expr.left.accept(this);
         let right = expr.right.accept(this);
-        return `(${left} ${expr.operator.lexeme} ${right})`;
+        return `${left} ${expr.operator.lexeme} ${right}`;
     }
 
     visitGroupingExpr(expr: Expr.Grouping): string {
         return `(${expr.inner.accept(this)})`;
+    }
+
+    visitIndexingExpr(expr: Expr.Indexing): string {
+        let collection = expr.collection.accept(this);
+        let index = expr.index.accept(this);
+        return `__get(${collection}, ${index})`;        
     }
 
     visitLiteralExpr(expr: Expr.Literal): string {

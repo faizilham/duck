@@ -199,7 +199,21 @@ export class Parser {
             return new Expr.Unary(operator, right);
         }
 
-        return this.primary();
+        return this.call();
+    }
+
+    private call() : Expr {
+        let expr = this.primary();
+        while (true){
+            if (this.match(TokenType.LEFT_SQUARE)){
+                expr = new Expr.Indexing(this.previous(), expr, this.expression());
+                this.consume(TokenType.RIGHT_SQUARE, "Expect ']'");
+            } else {
+                break;
+            }
+        }
+
+        return expr;
     }
 
     private primary() : Expr {
