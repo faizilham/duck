@@ -62,7 +62,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
 
         if (variable !== expr){
-            throw this.error(stmt.name, `Unmatched declared and assigned value type: ${DuckType[variable]} and ${DuckType[expr]}`)
+            throw this.error(stmt.name, `Unmatched declared and assigned value type: ${variable} and ${expr}`)
         }
     }
 
@@ -84,7 +84,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
     visitIfStmt(stmt: Stmt.If): void {
         let condition = stmt.condition.accept(this);
 
-        if (condition !== DuckType.Bool){
+        if (!DuckType.Bool.contains(condition)){
             throw this.error(stmt.token, "Condition has to be boolean");
         }
 
@@ -98,7 +98,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
     visitWhileStmt(stmt: Stmt.While): void {
         let condition = stmt.condition.accept(this);
 
-        if (condition !== DuckType.Bool){
+        if (!DuckType.Bool.contains(condition)){
             throw this.error(stmt.token, "Condition has to be boolean");
         }
 
@@ -116,7 +116,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             typeExpr = stmt.typeExpr.accept(this);
 
             if (expr && typeExpr !== expr){
-                throw this.error(stmt.name, `Unmatched declared and initiated type: ${DuckType[typeExpr]} and ${DuckType[expr]}`);
+                throw this.error(stmt.name, `Unmatched declared and initiated type: ${typeExpr} and ${expr}`);
             }
         }
 
@@ -144,7 +144,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         switch(expr.operator.tokenType){
             case TokenType.PLUS:
                 if (left == right){
-                    if (left == DuckType.Number || left == DuckType.String){
+                    if (DuckType.Number.contains(left) || DuckType.String.contains(left)){
                         return left;
                     }
                 }
@@ -153,7 +153,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             case TokenType.MINUS:
             case TokenType.STAR:
             case TokenType.SLASH:
-                if (left == right && left == DuckType.Number){
+                if (left == right && DuckType.Number.contains(left)){
                     return left;
                 }
             break;
@@ -169,13 +169,13 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             case TokenType.GREATER_EQUAL:
             case TokenType.LESS:
             case TokenType.LESS_EQUAL:
-                if (left == right && left == DuckType.Number){
+                if (left == right && DuckType.Number.contains(left)){
                     return DuckType.Bool;
                 }
             break;
         }
 
-        throw this.error(expr.operator, `Unknown operator ${expr.operator.lexeme} for type ${DuckType[left]} and ${DuckType[right]}`);
+        throw this.error(expr.operator, `Unknown operator ${expr.operator.lexeme} for type ${left} and ${right}`);
     }
 
     visitGroupingExpr(expr: Expr.Grouping): DuckType {
@@ -191,14 +191,14 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
         switch(expr.operator.tokenType){
             case TokenType.MINUS:
-                if (right == DuckType.Number) return right;
+                if (DuckType.Number.contains(right)) return right;
             break;
             case TokenType.BANG:
-                if (right == DuckType.Bool) return right;
+                if (DuckType.Bool.contains(right)) return right;
             break;
         }
 
-        throw this.error(expr.operator, `Unknown operator ${expr.operator.lexeme} for type ${DuckType[right]}`);
+        throw this.error(expr.operator, `Unknown operator ${expr.operator.lexeme} for type ${right}`);
     }
 
     visitVariableExpr(expr: Expr.Variable): DuckType {

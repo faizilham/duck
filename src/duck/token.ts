@@ -1,5 +1,4 @@
-import {DuckType} from "./types"
-import { Duck } from ".";
+import { DuckType } from "./types"
 
 export enum TokenType {
     EOF,
@@ -37,7 +36,7 @@ export class Token {
     public stringify() : string {
         let type = (this.literalType === undefined) ?
             null :
-            DuckType[<DuckType>this.literalType]
+            this.literalType.toString()
         ;
         return `Token(${TokenType[this.tokenType]}, '${this.lexeme}', ${this.literal}, ${type}, ${this.line})`;
     }
