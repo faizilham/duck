@@ -3,6 +3,10 @@ import {Stmt} from "./ast/stmt"
 import {TokenType, Token} from "./token"
 import { DuckType } from "./types";
 
+function isInt(x : any) : boolean{
+    return (~~x) === x;
+}
+
 export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefined> {
 
     public optimize(statements : Stmt[]) : Stmt[]{
@@ -116,14 +120,20 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         if ((left instanceof Expr.Literal) && (right instanceof Expr.Literal)){
             switch (expr.operator.tokenType){
                 case TokenType.PLUS:
-                    return new Expr.Literal(left.value + right.value, left.type);
+                    if (isInt(left.value) || isInt(right.value))
+                        return new Expr.Literal(left.value + right.value, left.type);
+                    break;
 
                 case TokenType.MINUS:
-                    return new Expr.Literal(left.value - right.value, left.type);
-                
+                    if (isInt(left.value) || isInt(right.value))        
+                        return new Expr.Literal(left.value - right.value, left.type);
+                    break;
+                    
                 case TokenType.STAR:
-                    return new Expr.Literal(left.value * right.value, left.type);
-            
+                    if (isInt(left.value) || isInt(right.value))            
+                        return new Expr.Literal(left.value * right.value, left.type);
+                    break;
+                    
                 case TokenType.BANG_EQUAL:
                     return new Expr.Literal(left.value !== right.value, DuckType.Bool);
                     
