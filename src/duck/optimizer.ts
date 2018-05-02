@@ -120,7 +120,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         if ((left instanceof Expr.Literal) && (right instanceof Expr.Literal)){
             switch (expr.operator.tokenType){
                 case TokenType.PLUS:
-                    if (isInt(left.value) || isInt(right.value))
+                    if (DuckType.String.contains(left.type) || isInt(left.value) || isInt(right.value))
                         return new Expr.Literal(left.value + right.value, left.type);
                     break;
 

@@ -1,5 +1,6 @@
 import { Expr } from "./ast/expr"
 import { Stmt } from "./ast/stmt";
+import { DuckType } from "./types";
 
 export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     private currentBlock = 0;
@@ -94,6 +95,8 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     }
 
     visitLiteralExpr(expr: Expr.Literal): string {
+        if (DuckType.String.contains(expr.type))
+            return `"${expr.value}"`;
         return `${expr.value}`;
     }
 
