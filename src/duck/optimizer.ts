@@ -6,16 +6,7 @@ import { DuckType } from "./types";
 export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefined> {
 
     public optimize(statements : Stmt[]) : Stmt[]{
-        let optimized : Stmt[] = [];
-
-        for (let statement of statements){
-            try {
-                let opt = statement.accept(this);
-                if (opt) optimized.push(opt);
-            } catch(e){}
-        }
-
-        return optimized;
+        return this.filterEmpty(statements);
     }
 
     /** Statement Visitor */
@@ -26,23 +17,37 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
     }
 
     visitBlockStmt(stmt: Stmt.Block): Stmt | undefined {
-        let optimized : Stmt[] = [];
-
-        for (let statement of stmt.statements){
-            let opt = statement.accept(this);
-            if (opt) optimized.push(opt);
-        }
+        let optimized = this.filterEmpty(stmt.statements);
 
         if (optimized.length === 0){ // remove empty block
             return;
-        } else if (optimized.length === 1 && optimized[0] instanceof Stmt.Block){ 
-            // unbox block inside block without any other statement
-            return optimized[0];
         }
 
         stmt.statements = optimized;
 
         return stmt;
+    }
+
+    filterEmpty(statements : Stmt[]) : Stmt[] {
+        let optimized : Stmt[] = [];
+
+        for (let statement of statements){
+            let opt = statement.accept(this);
+
+            if (!opt) continue;
+
+            // unbox block if no local variable declaration           
+            if (opt instanceof Stmt.Block && opt.localVars === 0){
+                for (let stmt of opt.statements){
+                    optimized.push(stmt);
+                }
+                continue;
+            }
+
+            optimized.push(opt);
+        }
+
+        return optimized;
     }
 
     visitExpressionStmt(stmt: Stmt.Expression): Stmt | undefined {
@@ -66,7 +71,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         stmt.thenBranch.accept(this);
 
         if (stmt.elseBranch) {
-            stmt.elseBranch = stmt.elseBranch.accept(this); // remove else if empty / not other if
+            stmt.elseBranch = stmt.elseBranch.accept(this); // remove else if empty / removed
         }
 
         return stmt;

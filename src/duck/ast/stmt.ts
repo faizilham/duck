@@ -18,7 +18,7 @@ export namespace Stmt {
     }
 
     export class Block extends Stmt {
-        constructor(public statements: Stmt[]) {
+        constructor(public statements: Stmt[], public localVars: number = 0) {
             super();
         }
 

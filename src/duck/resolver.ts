@@ -27,6 +27,10 @@ class SymbolTable {
         return this.valueMap[name.lexeme];
     }
 
+    public size() : number {
+        return Object.keys(this.valueMap).length;
+    }
+
     public clear(){
         this.valueMap = {};
     }
@@ -68,11 +72,13 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
     visitBlockStmt(stmt: Stmt.Block): void {
         let currentTable = this.symtable;
-        this.symtable = new SymbolTable(this.symtable);
+        this.symtable = new SymbolTable(this.symtable);        
 
-        for (let statement of stmt.statements){
+        for (let statement of stmt.statements){                  
             statement.accept(this);
         }
+
+        stmt.localVars = this.symtable.size();
 
         this.symtable = currentTable;
     }

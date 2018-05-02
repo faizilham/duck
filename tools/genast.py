@@ -40,7 +40,7 @@ AST = {
         [
             
             "Assignment -> name: Token, expr: Expr",
-            "Block      -> statements: Stmt[]",
+            "Block      -> statements: Stmt[], localVars : number = 0",
             "Expression -> expr: Expr",
             "If         -> token: Token, condition: Expr, thenBranch: Stmt, elseBranch?: Stmt",
             "While      -> token: Token, condition: Expr, body: Stmt",
