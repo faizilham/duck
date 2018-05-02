@@ -1,7 +1,7 @@
 import {Expr} from "./ast/expr"
 import {TypeExpr} from "./ast/typeexpr"
 import {Stmt} from "./ast/stmt"
-import { DuckType } from "./types";
+import { DuckType, Type } from "./types";
 import { Token, TokenType } from "./token";
 import { Reporter } from "./error"
 
@@ -125,11 +125,30 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         let type = expr || typeExpr;
         if (!type) throw this.error(stmt.name, "Unknown variable type");
 
+        if (!expr) {
+            stmt.expr = this.defaultVarTypeValue(stmt.name, type);
+        }
+
         if (this.symtable.getLocal(stmt.name)){
             throw this.error(stmt.name, `Identifier ${stmt.name.lexeme} is already declared in this context`);
         }
 
         this.symtable.add(stmt.name, type);
+    }
+
+    defaultVarTypeValue (vartoken : Token, type : DuckType) : Expr {
+        switch(type.type){
+            case Type.Bool:
+                return new Expr.Literal(false, type);
+            case Type.Number:
+                return new Expr.Literal(0, type);
+            case Type.String:
+                return new Expr.Literal("", type);            
+            case Type.List:
+                return new Expr.List(new Token(TokenType.LEFT_SQUARE, "[", vartoken.line), []);
+            default:
+                throw this.error(vartoken, `Unknown default value for type ${type}`);
+        }
     }
 
     /** TypeExpression Visitor */
