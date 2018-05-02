@@ -117,11 +117,10 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
             if (expr && !typeExpr.contains(expr)){
                 throw this.error(stmt.name, `Unmatched declared and initiated type: ${typeExpr} and ${expr}`);
-            }
+            } 
+        } else if (expr instanceof DuckType.List && expr.isNullList()){
+            throw this.error(stmt.name, "Can't infer empty array type from assignment");
         }
-
-        // TODO: merge declared X[] with assigned null []
-        // also handle: X[][] assigned with []
 
         let type = expr || typeExpr;
         if (!type) throw this.error(stmt.name, "Unknown variable type");
@@ -200,16 +199,11 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         for (let element of expr.elements){
             let type = element.accept(this);
             
-            // TODO: merge X[] with a null []
-            // also handle X[][] with a null []
-            // also handle if null [] appears as first element
-
-            if (!elementType || type.contains(elementType)){
+            if (!elementType || type.contains(elementType)){ // if first element or first is subtype of current
                 elementType = type;
             } else if (!elementType.contains(type)){
                 throw this.error(expr.token, `Unmatch element type #${i} ${type} from element type #0 ${elementType}`);
             }
-
             
             i++;
         }
