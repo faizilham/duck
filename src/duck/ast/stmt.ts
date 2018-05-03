@@ -47,6 +47,16 @@ export namespace Stmt {
         }
     }
 
+    export class SetIndex extends Stmt {
+        constructor(public target: Expr.Indexing, public token: Token, public expr: Expr) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitSetIndexStmt(this);
+        }
+    }
+
     export class While extends Stmt {
         constructor(public token: Token, public condition: Expr, public body: Stmt) {
             super();
@@ -72,6 +82,7 @@ export namespace Stmt {
         visitBlockStmt(stmt: Block) : T;
         visitExpressionStmt(stmt: Expression) : T;
         visitIfStmt(stmt: If) : T;
+        visitSetIndexStmt(stmt: SetIndex) : T;
         visitWhileStmt(stmt: While) : T;
         visitVarDeclStmt(stmt: VarDecl) : T;
     }

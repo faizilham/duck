@@ -4,6 +4,9 @@ import { DuckType } from "./types";
 
 export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     private currentBlock = 0;
+    public options = {
+        arrayBoundChecking: true
+    };
 
     public print (statements : Stmt[] ) : string {
         return statements.map(stmt => stmt.accept(this)).join("\n");
@@ -57,6 +60,19 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         return result;
     }
 
+    visitSetIndexStmt(stmt: Stmt.SetIndex): string {
+        let collection = stmt.target.collection.accept(this);
+        let index = stmt.target.index.accept(this);
+
+        let expr = stmt.expr.accept(this);
+
+        if (this.options.arrayBoundChecking){
+            return `__set(${collection}, ${index}, ${expr});`;
+        } else {
+            return `${collection}[${index}] = ${expr};`;
+        }
+    }
+
     visitWhileStmt(stmt: Stmt.While): string {
         let condition = stmt.condition.accept(this);
 
@@ -91,7 +107,12 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     visitIndexingExpr(expr: Expr.Indexing): string {
         let collection = expr.collection.accept(this);
         let index = expr.index.accept(this);
-        return `${collection}[${index}]`;        
+
+        if (this.options.arrayBoundChecking){
+            return `__get(${collection}, ${index})`;
+        } else {
+            return `${collection}[${index}]`;
+        }
     }
 
     visitLiteralExpr(expr: Expr.Literal): string {

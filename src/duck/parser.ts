@@ -59,14 +59,19 @@ export class Parser {
     private assignment(variable : Expr) : Stmt {
         let token = this.previous();
         let expr = this.expression();
+        let stmt;
 
-        if (!(variable instanceof Expr.Variable)){
-            throw this.error(token, "Invalid assignment target");            
+        if (variable instanceof Expr.Variable){
+            stmt = new Stmt.Assignment(variable.name, expr);
+        } else if (variable instanceof Expr.Indexing){
+            stmt = new Stmt.SetIndex(variable, token, expr);
+        } else {
+            throw this.error(token, "Invalid assignment target");
         }
 
         this.match(TokenType.SEMICOLON);
 
-        return new Stmt.Assignment(variable.name, expr);
+        return stmt;
     }
 
     private block(): Stmt[] {

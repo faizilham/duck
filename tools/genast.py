@@ -43,6 +43,7 @@ AST = {
             "Block      -> statements: Stmt[], localVars : number = 0",
             "Expression -> expr: Expr",
             "If         -> token: Token, condition: Expr, thenBranch: Stmt, elseBranch?: Stmt",
+            "SetIndex   -> target: Expr.Indexing, token: Token, expr: Expr",
             "While      -> token: Token, condition: Expr, body: Stmt",
             "VarDecl    -> name: Token, typeExpr?: TypeExpr, expr?: Expr",
         ]

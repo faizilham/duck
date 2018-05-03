@@ -86,6 +86,12 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         return stmt;
     }
 
+    visitSetIndexStmt(stmt: Stmt.SetIndex): Stmt | undefined {
+        stmt.target = <Expr.Indexing>stmt.target.accept(this);
+        stmt.expr = this.cleanGrouping(stmt.expr.accept(this));
+        return stmt;
+    }
+
     visitWhileStmt(stmt: Stmt.While): Stmt | undefined {
         stmt.condition = this.cleanGrouping(stmt.condition.accept(this));
 

@@ -105,6 +105,15 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
     }
 
+    visitSetIndexStmt(stmt: Stmt.SetIndex): void {
+        let target = stmt.target.accept(this);
+        let expr = stmt.expr.accept(this);
+
+        if (!target.contains(expr)){
+            throw this.error(stmt.token, `Unmatched declared and assigned value type: ${target} and ${expr}`)
+        }
+    }
+
     visitWhileStmt(stmt: Stmt.While): void {
         let condition = stmt.condition.accept(this);
 
