@@ -174,6 +174,19 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         return expr;
     }
 
+    visitCallExpr(expr: Expr.Call): Expr {
+        expr.callee = expr.callee.accept(this);
+        let parameters : Expr.PairParameter[] = [];
+
+        expr.parameters.forEach(([token, expr]) =>{
+            parameters.push([token, expr && expr.accept(this)])
+        });
+
+        expr.parameters = parameters;
+
+        return expr;
+    }
+
     visitGroupingExpr(expr: Expr.Grouping): Expr {
         expr.inner = expr.inner.accept(this);
 

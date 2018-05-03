@@ -47,15 +47,15 @@ struct : { (key: value)* }
         y : number
     }
 
-    let p : Point = Point{x: 5, y: 6}
-    let p : Point = Point{5, 6}
-    let p = Point{} // defaults to Point {x: 0, y: 0}
+    let p : Point = Point(x = 5, y = 6)
+    let p : Point = Point(5, 6)
+    let p = Point() // defaults to Point {x: 0, y: 0}
     let p : Point // defaults to Point {x: 0, y: 0}
 
     // untagged struct
 
     struct Vector(number, number)
-    let v = Vector{0, 0}
+    let v = Vector(0, 0)
     let distance = sqrt(v.0*v.0 + v.1*v.1)
 
     struct Point3D {
@@ -66,8 +66,8 @@ struct : { (key: value)* }
     //  - members(Point) subset of members(Point3D)
     //  - functions(Point) subset of functions(Point3D)
 
-    let p : Point = Point3D{} // valid
-    let p3 : Point3D = Point{} // invalid
+    let p : Point = Point3D() // valid
+    let p3 : Point3D = Point() // invalid
 
 enum
     

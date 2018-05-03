@@ -26,8 +26,19 @@ export namespace TypeExpr {
         }
     }
 
+    export class Custom extends TypeExpr {
+        constructor(public name: Token) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitCustomTypeExpr(this);
+        }
+    }
+
     export interface Visitor<T> {
         visitBasicTypeExpr(typeexpr: Basic) : T;
         visitListTypeExpr(typeexpr: List) : T;
+        visitCustomTypeExpr(typeexpr: Custom) : T;
     }
 }

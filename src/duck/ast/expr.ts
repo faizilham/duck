@@ -6,6 +6,7 @@ export abstract class Expr {
 }
 
 export namespace Expr {
+    export type PairParameter = [Token | null, Expr | undefined];
     export class Binary extends Expr {
         constructor(public left: Expr, public operator: Token, public right: Expr) {
             super();
@@ -13,6 +14,16 @@ export namespace Expr {
 
         public accept<T>(visitor : Visitor<T>) : T {
             return visitor.visitBinaryExpr(this);
+        }
+    }
+
+    export class Call extends Expr {
+        constructor(public callee: Expr, public token: Token, public parameters: PairParameter[], public paramTypes: (DuckType|undefined)[] = []) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitCallExpr(this);
         }
     }
 
@@ -78,6 +89,7 @@ export namespace Expr {
 
     export interface Visitor<T> {
         visitBinaryExpr(expr: Binary) : T;
+        visitCallExpr(expr: Call) : T;
         visitGroupingExpr(expr: Grouping) : T;
         visitIndexingExpr(expr: Indexing) : T;
         visitLiteralExpr(expr: Literal) : T;

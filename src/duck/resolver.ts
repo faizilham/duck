@@ -9,15 +9,26 @@ import { DuckType, Type } from "./types";
 import { Token, TokenType } from "./token";
 import { Reporter } from "./error"
 
+enum EntryType {
+    VAR = 1,
+    TYPE
+}
+
+class SymbolEntry {
+    constructor(public entryType : EntryType, public type : DuckType){
+
+    }
+}
+
 class SymbolTable {
-    private valueMap : any = {};
+    private valueMap : {[s: string] : SymbolEntry}  = {};
     constructor(public parent? : SymbolTable ){}
 
-    public add(name : Token, type: DuckType){
-        this.valueMap[name.lexeme] = type;
+    public add(name : Token, entryType: EntryType, type: DuckType){
+        this.valueMap[name.lexeme] = new SymbolEntry(entryType, type);
     }
 
-    public get(name : Token) : DuckType | undefined {
+    public get(name : Token) : SymbolEntry | undefined {
         let result = this.getLocal(name);
 
         if (!result && this.parent){
@@ -27,7 +38,7 @@ class SymbolTable {
         return result;
     }
 
-    public getLocal(name : Token) : DuckType | undefined {
+    public getLocal(name : Token) : SymbolEntry | undefined {
         return this.valueMap[name.lexeme];
     }
 
@@ -41,7 +52,6 @@ class SymbolTable {
 }
 
 export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckType>, Stmt.Visitor<void> {
-    
     private symtable : SymbolTable = new SymbolTable(); 
 
     public resolve(statements : Stmt[]){
@@ -66,11 +76,11 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
         let variable = this.symtable.get(stmt.name);
 
-        if (!variable) {
+        if (!variable || (variable.entryType !== EntryType.VAR)) {
             throw this.error(stmt.name, `Attempting to assign undeclared variable ${stmt.name.lexeme}`);
         }
 
-        if (!variable.contains(expr)){
+        if (!variable.type.contains(expr)){
             throw this.error(stmt.name, `Unmatched declared and assigned value type: ${variable} and ${expr}`)
         }
     }
@@ -128,7 +138,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
         stmt.type = structType;
 
-        this.symtable.add(stmt.name, structType);        
+        this.symtable.add(stmt.name, EntryType.TYPE, structType);        
     }
 
     visitWhileStmt(stmt: Stmt.While): void {
@@ -167,7 +177,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
         stmt.type = type;
 
-        this.symtable.add(stmt.name, type);
+        this.symtable.add(stmt.name, EntryType.VAR, type);
     }
 
     /** TypeExpression Visitor */
@@ -177,6 +187,16 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
     visitListTypeExpr(typeexpr: TypeExpr.List): DuckType {
         return new DuckType.List(typeexpr.element.accept(this));
+    }
+
+    visitCustomTypeExpr(typeexpr: TypeExpr.Custom): DuckType {
+        let custom = this.symtable.get(typeexpr.name);
+
+        if (!custom || (custom.entryType !== EntryType.TYPE)){
+            throw this.error(typeexpr.name, `Unknown type ${typeexpr.name.lexeme}`);
+        }
+
+        return custom.type;
     }
 
     /** Expression Visitor */
@@ -220,6 +240,77 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
 
         throw this.error(expr.operator, `Unknown operator ${expr.operator.lexeme} for type ${left} and ${right}`);
+    }
+
+    visitCallExpr(expr: Expr.Call): DuckType {
+        if (expr.callee instanceof Expr.Variable){
+            return this.simpleCall(expr)
+        }
+
+        let type = expr.callee.accept(this);
+
+        throw this.error(expr.token, `Unknown operator() for type ${type}`);
+    }
+
+    simpleCall(expr : Expr.Call) : DuckType {
+        let callee = (<Expr.Variable> expr.callee);
+        let entry = this.symtable.get(callee.name)
+
+        if (!entry || entry.entryType !== EntryType.TYPE){
+            throw this.error(expr.token, `Unknown type ${callee.name.lexeme}`);
+        }
+
+        if (!(entry.type instanceof DuckType.Struct)){
+            throw this.error(expr.token, `Can't instantiate ${entry.type.toString} using operator()`);            
+        }
+
+        let type = entry.type;        
+        
+
+        if (expr.parameters.length > 0){
+            let paramTypes : [Token | null, DuckType | undefined][] = [];
+
+            // visit parameters
+            for (let [token, param] of expr.parameters){
+                paramTypes.push([token, param && param.accept(this)]);
+            }
+
+            // rearrange parameters to match its occurence / name
+
+            let structTypes : DuckType[] = type.memberNames.map((name) => type.members[name]);
+            let rearranged : Expr.PairParameter[] = []; 
+            type.memberNames.forEach(() => rearranged.push([null, undefined]));
+            
+            for (let i = 0; i < paramTypes.length; i++){
+                let [token, param] = paramTypes[i];
+
+                let index = i;
+
+                // get actual index if using (X = expr) notation
+                if (token){
+                    index = type.memberNames.indexOf(token.lexeme);
+                    if (index < 0){
+                        throw this.error(token, `Unknown member argument ${token.lexeme}`);
+                    }
+                }
+
+                // check parameter type
+                if (param){
+                    let expectedType = structTypes[index];
+
+                    if (!expectedType.contains(param)){
+                        throw this.error(expr.token, `Can't assign argument type ${expectedType} with ${param}`)
+                    }
+                }
+                
+                rearranged[index][1] = expr.parameters[i][1];
+            }
+
+            expr.paramTypes = structTypes;
+            expr.parameters = rearranged;
+        }
+
+        return type;
     }
 
     visitGroupingExpr(expr: Expr.Grouping): DuckType {
@@ -287,8 +378,8 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
     visitVariableExpr(expr: Expr.Variable): DuckType {
         let variable = this.symtable.get(expr.name);
 
-        if (variable)
-            return variable;
+        if (variable && variable.entryType == EntryType.VAR)
+            return variable.type;
         
         throw this.error(expr.name, `Unknown identifier ${expr.name.lexeme}`);
     }

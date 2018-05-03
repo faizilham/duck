@@ -182,12 +182,16 @@ export class Parser {
         return new Stmt.VarDecl(name, typeDefinition, initializer);
     }
 
+    /*** Type Annotation Parsing ***/
     private typeExpression() : TypeExpr {
         let texpr: TypeExpr | undefined;
 
         if (this.match(TokenType.TYPE_BOOL, TokenType.TYPE_NUMBER, TokenType.TYPE_STRING)){
             let token = this.previous();
             texpr = new TypeExpr.Basic(token, <DuckType>token.literalType);
+        } else if (this.match(TokenType.IDENTIFIER)){
+            let name = this.previous();
+            texpr = new TypeExpr.Custom(name);
         }
         
         if (!texpr){
@@ -243,12 +247,39 @@ export class Parser {
             if (this.match(TokenType.LEFT_SQUARE)){
                 expr = new Expr.Indexing(this.previous(), expr, this.expression());
                 this.consume(TokenType.RIGHT_SQUARE, "Expect ']'");
+            } else if (this.match(TokenType.LEFT_PAREN)){ 
+                expr = this.finishCall(expr);
             } else {
                 break;
             }
         }
 
         return expr;
+    }
+
+    private finishCall(callee : Expr) : Expr{
+        let args : Expr.PairParameter[] = [];
+
+        if (!this.check(TokenType.RIGHT_PAREN)){
+            do {
+                let name = null;
+                let expr = this.expression();
+                if (this.match(TokenType.EQUAL)){
+                    if (!(expr instanceof Expr.Variable)){
+                        throw this.error(this.previous(), "Invalid argument assignment target");
+                    }
+
+                    name = expr.name;
+                    expr = this.expression();
+                } 
+
+                args.push([name, expr]);
+            } while(this.match(TokenType.COMMA));
+        }
+
+        let token = this.consume(TokenType.RIGHT_PAREN, "Expect ')' after call expression");
+
+        return new Expr.Call(callee, token, args);
     }
 
     private primary() : Expr {

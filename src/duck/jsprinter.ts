@@ -126,6 +126,8 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
                 return '""';
             case Type.List:
                 return "[]";
+            case Type.Struct:
+                return `new struct$${(<DuckType.Struct> type).name}()`;
         }
 
         return "null";
@@ -137,6 +139,16 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         let left = expr.left.accept(this);
         let right = expr.right.accept(this);
         return `${left} ${expr.operator.lexeme} ${right}`;
+    }
+
+    visitCallExpr(expr: Expr.Call): string {
+        let callee = expr.callee.accept(this);
+        let parameters = expr.parameters.map( ([, e], i) => {
+            if (e) return e.accept(this)
+            return this.defaultVarTypeValue(expr.paramTypes[i]);
+        });
+
+        return `${callee}(${parameters.join(", ")})`;
     }
 
     visitGroupingExpr(expr: Expr.Grouping): string {

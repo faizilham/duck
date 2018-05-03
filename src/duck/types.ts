@@ -96,10 +96,12 @@ export namespace DuckType{
     export class Struct implements DuckType {
         public readonly type: Type = Type.Struct;
         public members : { [s: string]: DuckType } = {};
+        public memberNames : string[] = [];
 
         constructor(public name : string, parameters : Parameter[]){
             for (let param of parameters){
                 this.members[param[0]] = param[1];
+                this.memberNames.push(param[0]);
             }
         }
 
@@ -107,7 +109,7 @@ export namespace DuckType{
             if (!(d instanceof Struct)) return false;
 
             // check if all member in this is exist and super/same type in d member
-            for (let key in this.members){
+            for (let key of this.memberNames){
                 if (!d.members[key] || !this.members[key].contains(d.members[key])){
                     return false;
                 }
