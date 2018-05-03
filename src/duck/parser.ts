@@ -59,7 +59,7 @@ export class Parser {
             throw this.error(token, "Invalid assignment target");            
         }
 
-        this.consume(TokenType.SEMICOLON, "Expect ';' after expression");
+        this.match(TokenType.SEMICOLON);
 
         return new Stmt.Assignment(variable.name, expr);
     }
@@ -86,7 +86,7 @@ export class Parser {
             return this.assignment(expr);
         }
 
-        this.consume(TokenType.SEMICOLON, "Expect ';' after expression");
+        this.match(TokenType.SEMICOLON);
 
         return new Stmt.Expression(expr);
     }
@@ -141,7 +141,7 @@ export class Parser {
             throw this.error(this.previous(), "Variable declaration have to be typed if not initialized");
         }
 
-        this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");        
+        this.match(TokenType.SEMICOLON);
 
         return new Stmt.VarDecl(name, typeDefinition, initializer);
     }
@@ -314,6 +314,8 @@ export class Parser {
 
         while (!this.isAtEnd()){
             if (this.previous().tokenType == TokenType.SEMICOLON)
+                return;
+            else if (this.previous().line < this.peek().line)
                 return;
             
                 switch(this.peek().tokenType){
