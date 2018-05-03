@@ -1,3 +1,7 @@
+/**
+ * Resolver resolve variable scoping, and check & infer type for each variable and expression 
+ */
+
 import {Expr} from "./ast/expr"
 import {TypeExpr} from "./ast/typeexpr"
 import {Stmt} from "./ast/stmt"

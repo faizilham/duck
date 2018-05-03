@@ -1,3 +1,7 @@
+/**
+ * Parser build AST tree from array of token
+ */
+
 import {Token, TokenType} from "./token"
 import {DuckType} from "./types"
 import {Expr} from "./ast/expr"

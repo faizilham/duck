@@ -1,3 +1,7 @@
+/**
+ * Optimizer optimize and minimize AST tree structure
+ */
+
 import {Expr} from "./ast/expr"
 import {Stmt} from "./ast/stmt"
 import {TokenType, Token} from "./token"
@@ -38,9 +42,10 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         for (let statement of statements){
             let opt = statement.accept(this);
 
+            // Filter out all removed statement
             if (!opt) continue;
 
-            // unbox block if no local variable declaration           
+            // Unbox block if it has no local variable declaration           
             if (opt instanceof Stmt.Block && opt.localVars === 0){
                 for (let stmt of opt.statements){
                     optimized.push(stmt);
@@ -62,7 +67,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
     visitIfStmt(stmt: Stmt.If): Stmt | undefined {
         stmt.condition = this.cleanGrouping(stmt.condition.accept(this));
 
-        // return the right branch if condition is literal false or true
+        // Return the right branch if condition is literal false or true
         if ((stmt.condition instanceof Expr.Literal)){
             if (stmt.condition.value === false){
                 if (!stmt.elseBranch) return;
@@ -75,7 +80,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         stmt.thenBranch.accept(this);
 
         if (stmt.elseBranch) {
-            stmt.elseBranch = stmt.elseBranch.accept(this); // remove else if empty / removed
+            stmt.elseBranch = stmt.elseBranch.accept(this); // will remove else if empty / removed
         }
 
         return stmt;
@@ -84,7 +89,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
     visitWhileStmt(stmt: Stmt.While): Stmt | undefined {
         stmt.condition = this.cleanGrouping(stmt.condition.accept(this));
 
-        // remove loop if literal false
+        // Remove loop statement if condition is literal false
         if ((stmt.condition instanceof Expr.Literal) && stmt.condition.value === false){
             return;
         }
@@ -102,6 +107,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         return stmt;
     }
 
+    // Unbox grouping (used in visit statements only)
     cleanGrouping(expr : Expr) : Expr{
         if (expr instanceof Expr.Grouping){
             return expr.inner;
@@ -117,6 +123,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
 
         const left = expr.left, right = expr.right;
 
+        // Evaluate literal, except if left & right is float (to prevent rounding error at translation)
         if ((left instanceof Expr.Literal) && (right instanceof Expr.Literal)){
             switch (expr.operator.tokenType){
                 case TokenType.PLUS:
@@ -160,6 +167,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
     visitGroupingExpr(expr: Expr.Grouping): Expr {
         expr.inner = expr.inner.accept(this);
 
+        // Unbox grouping or literal inside a grouping
         if (expr.inner instanceof Expr.Grouping){
             return expr.inner;
         } else if (expr.inner instanceof Expr.Literal){
@@ -190,6 +198,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         expr.right = expr.right.accept(this);
         const right = expr.right;
 
+        // Evaluate literal expression
         if (right instanceof Expr.Literal){
             switch(expr.operator.tokenType){
                 case TokenType.MINUS:

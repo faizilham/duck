@@ -1,3 +1,7 @@
+/**
+ * Lexer make array of token from source code string
+ */
+
 import {Token, TokenType} from "./token"
 import {DuckType} from "./types"
 import {Reporter} from "./error"
