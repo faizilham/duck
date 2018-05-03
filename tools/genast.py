@@ -35,8 +35,11 @@ AST = {
             ("Token", "../token"),
             ("Expr", "./expr"),
             ("TypeExpr", "./typeexpr"),
+            ("DuckType", "../types"),            
         ],
-        [],
+        [
+            "export type Parameter = [Token, TypeExpr]"
+        ],
         [
             
             "Assignment -> name: Token, expr: Expr",
@@ -44,8 +47,9 @@ AST = {
             "Expression -> expr: Expr",
             "If         -> token: Token, condition: Expr, thenBranch: Stmt, elseBranch?: Stmt",
             "SetIndex   -> target: Expr.Indexing, token: Token, expr: Expr",
+            "Struct     -> name: Token, members: Parameter[], type? : DuckType",
             "While      -> token: Token, condition: Expr, body: Stmt",
-            "VarDecl    -> name: Token, typeExpr?: TypeExpr, expr?: Expr",
+            "VarDecl    -> name: Token, typeExpr?: TypeExpr, expr?: Expr, type?: DuckType",
         ]
     ),
 }
@@ -106,8 +110,6 @@ def define_ast(basename, imports, baseprops, type_data):
         writer.writeln()
 
         writer.start_block("export abstract class {}".format(basename))
-        for props in baseprops:
-            writer.writeln("{};".format(props))
 
         writer.writeln("public abstract accept<T>(visitor : {}.Visitor<T>) : T;".format(basename))
 
@@ -118,6 +120,9 @@ def define_ast(basename, imports, baseprops, type_data):
             
         # AST Classes
         writer.start_block("export namespace {}".format(basename))
+
+        for props in baseprops:
+            writer.writeln("{};".format(props))
 
         for (classname, fields) in types:
             writer.start_block("export class {} extends {}".format(classname, basename))

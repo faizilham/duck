@@ -26,18 +26,6 @@ string : '"' CHAR* '"'
 
     let s : string // defaults to ""
 
-tuple : < expression, (',' expression)*  >
-    <1> // type <number>
-    <1, 2.1> // type <number, number>
-    <1, "test"> // type <number, string>
-    <> // invalid
-
-    let tp : <number, string> = <12, "test">
-    let tp = <12, "test">
-    tp[0] == 12 // true
-    
-    let tp : <number, string> // defaults to <0, "">
-
 array : [ list? ]
     [1,3,5] // array<number>
     ["a", "b", "v"] // array<string>
@@ -49,15 +37,28 @@ array : [ list? ]
     let a : number[] // defaults to []
 
 struct : { (key: value)* }
-    struct Point = {
+    struct Point {
         x, y: number
     }
 
-    let p : Point = Point{x: 0, y: 0}
+    // the same as :
+    struct Point {
+        x : number,
+        y : number
+    }
+
+    let p : Point = Point{x: 5, y: 6}
+    let p : Point = Point{5, 6}
     let p = Point{} // defaults to Point {x: 0, y: 0}
     let p : Point // defaults to Point {x: 0, y: 0}
 
-    struct Point3D = {
+    // untagged struct
+
+    struct Vector(number, number)
+    let v = Vector{0, 0}
+    let distance = sqrt(v.0*v.0 + v.1*v.1)
+
+    struct Point3D {
         x, y, z: number
     }
 
@@ -88,9 +89,6 @@ enum
                 print("Value is", v);
         }
     }
-
-
-    type Value = Nil | Int(number) | Str(string) | Bool(bool)
 
     enum Value {
         Nil,

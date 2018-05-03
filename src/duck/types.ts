@@ -1,8 +1,11 @@
+import { Token } from "./token";
+
 export enum Type {
     Number = 1,
     String,
     Bool,
     List,
+    Struct
 }
 
 export interface DuckType {
@@ -12,6 +15,8 @@ export interface DuckType {
 }
 
 export namespace DuckType{
+    export type Parameter = [string, DuckType];
+
     export class DuckNumber implements DuckType {
         public readonly type : Type = Type.Number;
 
@@ -85,6 +90,34 @@ export namespace DuckType{
 
         public toString() : string{
             return this.elementType ? this.elementType.toString() + "[]" : "[]";
+        }
+    }
+
+    export class Struct implements DuckType {
+        public readonly type: Type = Type.Struct;
+        public members : { [s: string]: DuckType } = {};
+
+        constructor(public name : string, parameters : Parameter[]){
+            for (let param of parameters){
+                this.members[param[0]] = param[1];
+            }
+        }
+
+        public contains(d: DuckType): boolean {
+            if (!(d instanceof Struct)) return false;
+
+            // check if all member in this is exist and super/same type in d member
+            for (let key in this.members){
+                if (!d.members[key] || !this.members[key].contains(d.members[key])){
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public toString(): string {
+            return this.name;
         }
     }
 }

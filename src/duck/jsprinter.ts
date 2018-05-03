@@ -1,11 +1,20 @@
 import { Expr } from "./ast/expr"
 import { Stmt } from "./ast/stmt";
-import { DuckType } from "./types";
+import { DuckType, Type } from "./types";
 
-export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
+function structConstructorTemplate(name: string, parameters: [string,string][]) : string{
+
+return `function struct$${name}(${parameters.map(([name, value]) => `${name}=${value}`).join(", ")}){
+    ${parameters.map(([name]) => `this.${name}=${name};`).join("\n    ")}
+}
+`;
+
+}
+
+export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     private currentBlock = 0;
     public options = {
-        arrayBoundChecking: true
+        arrayBoundChecking: false
     };
 
     public print (statements : Stmt[] ) : string {
@@ -73,6 +82,19 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         }
     }
 
+    visitStructStmt(stmt: Stmt.Struct): string {
+        // return `// struct ${stmt.name.lexeme} constructor`;
+
+        let members = (<DuckType.Struct>stmt.type).members;
+        let param : [string, string][] = [];
+        
+        Object.keys(members).forEach(key => {
+            param.push([key, this.defaultVarTypeValue(members[key])]);
+        });
+
+        return structConstructorTemplate(stmt.name.lexeme, param);
+    }
+
     visitWhileStmt(stmt: Stmt.While): string {
         let condition = stmt.condition.accept(this);
 
@@ -83,13 +105,30 @@ export class ASTPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     }
 
     visitVarDeclStmt(stmt: Stmt.VarDecl): string {
-        let result = `let ${stmt.name.lexeme}`;
+        let result = `let ${stmt.name.lexeme} = `;
 
         if (stmt.expr){
-            result += " = " + stmt.expr.accept(this);
+            result += stmt.expr.accept(this);
+        } else {
+            result += this.defaultVarTypeValue(stmt.type)
         }
 
         return result + ";";
+    }
+
+    defaultVarTypeValue (type? : DuckType) : string {
+        switch(type && type.type){
+            case Type.Bool:
+                return "false";
+            case Type.Number:
+                return "0";
+            case Type.String:
+                return '""';
+            case Type.List:
+                return "[]";
+        }
+
+        return "null";
     }
 
     // Expr.Visitor implementation

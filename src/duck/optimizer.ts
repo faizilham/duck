@@ -92,6 +92,10 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         return stmt;
     }
 
+    visitStructStmt(stmt: Stmt.Struct): Stmt | undefined {
+        return stmt;
+    }
+
     visitWhileStmt(stmt: Stmt.While): Stmt | undefined {
         stmt.condition = this.cleanGrouping(stmt.condition.accept(this));
 

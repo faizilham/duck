@@ -28,6 +28,7 @@ export enum TokenType {
 
     // Keywords
     IF, ELSE, WHILE, LET,
+    STRUCT,
     PRINT, // temporarily, later will changed to standard lib function
 }
 

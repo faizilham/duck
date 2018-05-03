@@ -21,6 +21,8 @@ const ReservedWords : any = {
     "string": TokenType.TYPE_STRING,
     "bool": TokenType.TYPE_BOOL,
 
+    "struct": TokenType.STRUCT,
+
     "let": TokenType.LET,
     "print": TokenType.PRINT, // temporarily
 };

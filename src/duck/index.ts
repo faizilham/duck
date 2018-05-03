@@ -3,9 +3,9 @@ import * as util from "util";
 import {Lexer} from "./lexer";
 import {Parser} from "./parser";
 import {Reporter} from "./error";
-import { ASTPrinter } from "./astprinter";
 import { Resolver } from "./resolver";
 import { Optimizer } from "./optimizer";
+import { JSPrinter } from "./jsprinter";
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -50,7 +50,7 @@ export namespace Duck {
 
         if (Reporter.hasError) process.exit(1);        
 
-        let printer = new ASTPrinter();
+        let printer = new JSPrinter();
         console.log(printer.print(statements));
     }
 }

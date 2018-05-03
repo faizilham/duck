@@ -28,7 +28,7 @@ func_type : 'func' '(' type_list? ')' ':' typename
 type_list : typename (',' typename)*
 param_list : IDENTIFIER (',' IDENTIFIER)* ':' typename
 
-struct_decl : 'struct' IDENTIFIER '{' param_list+ '}'
+struct_decl : 'struct' IDENTIFIER ( '{' param_list+ '}' | '(' type_list ')' )
 
 trait_decl : 'trait' IDENTIFIER '=' trait_init ( '+' trait_init)*
 trait_init : '{' (param_list | trait_function)+ '}' | IDENTIFIER

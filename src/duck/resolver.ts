@@ -41,6 +41,7 @@ class SymbolTable {
 }
 
 export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckType>, Stmt.Visitor<void> {
+    
     private symtable : SymbolTable = new SymbolTable(); 
 
     public resolve(statements : Stmt[]){
@@ -114,6 +115,22 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
     }
 
+    visitStructStmt(stmt: Stmt.Struct): void {
+        let parameters : DuckType.Parameter[] = [];
+
+        for (let [member, typeexpr] of stmt.members){
+            let type = typeexpr.accept(this);
+
+            parameters.push([member.lexeme, type]);
+        }
+
+        let structType = new DuckType.Struct(stmt.name.lexeme, parameters);
+
+        stmt.type = structType;
+
+        this.symtable.add(stmt.name, structType);        
+    }
+
     visitWhileStmt(stmt: Stmt.While): void {
         let condition = stmt.condition.accept(this);
 
@@ -144,30 +161,13 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         let type = expr || typeExpr;
         if (!type) throw this.error(stmt.name, "Unknown variable type");
 
-        if (!expr) {
-            stmt.expr = this.defaultVarTypeValue(stmt.name, type);
-        }
-
         if (this.symtable.getLocal(stmt.name)){
             throw this.error(stmt.name, `Identifier ${stmt.name.lexeme} is already declared in this context`);
         }
 
-        this.symtable.add(stmt.name, type);
-    }
+        stmt.type = type;
 
-    defaultVarTypeValue (vartoken : Token, type : DuckType) : Expr {
-        switch(type.type){
-            case Type.Bool:
-                return new Expr.Literal(false, type);
-            case Type.Number:
-                return new Expr.Literal(0, type);
-            case Type.String:
-                return new Expr.Literal("", type);            
-            case Type.List:
-                return new Expr.List(new Token(TokenType.LEFT_SQUARE, "[", vartoken.line), []);
-            default:
-                throw this.error(vartoken, `Unknown default value for type ${type}`);
-        }
+        this.symtable.add(stmt.name, type);
     }
 
     /** TypeExpression Visitor */

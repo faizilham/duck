@@ -40,6 +40,7 @@ export class Parser {
         // TODO: whether only function and declaration at top?
         try {
             if (this.match(TokenType.LET)) return this.varDeclaration();
+            if (this.match(TokenType.STRUCT)) return this.structDeclaration();
 
             return this.statement(); 
         } catch(err){
@@ -123,6 +124,30 @@ export class Parser {
         return new Stmt.If(token, condition, thenBranch, elseBranch);
     }
 
+    private structDeclaration() : Stmt {
+        let name = this.consume(TokenType.IDENTIFIER, "Expect a struct name");
+
+        this.consume(TokenType.LEFT_BRACE, "Expect '{'");
+
+        let members : Stmt.Parameter[] = [];
+
+        do {
+            let memberVar = this.consume(TokenType.IDENTIFIER, "Expect member name");
+            this.consume(TokenType.COLON, "Expect ':'");
+
+            let typeexpr = this.typeExpression();
+
+            members.push([memberVar, typeexpr]);
+
+            this.match(TokenType.COMMA); // optional comma
+
+        } while (!this.check(TokenType.RIGHT_BRACE));
+
+        this.consume(TokenType.RIGHT_BRACE, "Expect '}");
+
+        return new Stmt.Struct(name, members);
+    }
+
     private whileStatement() : Stmt {
         let token = this.previous();
         let condition = this.expression();
@@ -156,7 +181,6 @@ export class Parser {
 
         return new Stmt.VarDecl(name, typeDefinition, initializer);
     }
-
 
     private typeExpression() : TypeExpr {
         let texpr: TypeExpr | undefined;
