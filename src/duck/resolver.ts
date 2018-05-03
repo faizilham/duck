@@ -65,7 +65,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             throw this.error(stmt.name, `Attempting to assign undeclared variable ${stmt.name.lexeme}`);
         }
 
-        if (variable !== expr){
+        if (!variable.contains(expr)){
             throw this.error(stmt.name, `Unmatched declared and assigned value type: ${variable} and ${expr}`)
         }
     }
