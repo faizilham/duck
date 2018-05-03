@@ -25,22 +25,23 @@ export class Parser {
         let statements : Stmt[] = [];
         
         while(!this.isAtEnd()){
-            try {
-                statements.push(this.declaration());
-            } catch(err){
-                Reporter.report(err.token.line, err.message);
-                this.synchronize();
-            }
+            let stmt = this.declaration();
+            if (stmt) statements.push(stmt);
         }
 
         return statements
     }
 
-    private declaration() : Stmt {
+    private declaration() : Stmt | undefined {
         // TODO: whether only function and declaration at top?
-        if (this.match(TokenType.LET)) return this.varDeclaration();
+        try {
+            if (this.match(TokenType.LET)) return this.varDeclaration();
 
-        return this.statement(); 
+            return this.statement(); 
+        } catch(err){
+            Reporter.report(err.token.line, err.message);
+            this.synchronize();
+        }
     }
 
     private statement() : Stmt {
@@ -68,7 +69,8 @@ export class Parser {
         let statements : Stmt[] = [];
 
         while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()){
-            statements.push(this.declaration());
+            let stmt = this.declaration();
+            if (stmt) statements.push(stmt);
         }
 
         this.consume(TokenType.RIGHT_BRACE, "Expect '}");
@@ -310,25 +312,23 @@ export class Parser {
     }
 
     private synchronize() {
-        // this.advance();
+        this.advance();
 
         while (!this.isAtEnd()){
             if (this.previous().tokenType == TokenType.SEMICOLON)
                 return;
-            else if (this.previous().line < this.peek().line)
-                return;
             
-                switch(this.peek().tokenType){
-                    case TokenType.LET:
-                    case TokenType.IF:
-                    case TokenType.WHILE:
-                    case TokenType.PRINT:
-                        return;
-                    
-                    default:
-                }
+            switch(this.peek().tokenType){
+                case TokenType.LET:
+                case TokenType.IF:
+                case TokenType.WHILE:
+                case TokenType.PRINT:
+                    return;
+                
+                default:
+            }
 
-                this.advance();
+            this.advance();
         }
     }
 }
