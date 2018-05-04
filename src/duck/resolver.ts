@@ -288,8 +288,9 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             }
 
             // rearrange parameters to match its occurence / name
+            const memberNames = Object.keys(struct.members);
+            const memberTypes = memberNames.map((name) => struct.members[name]);
 
-            let memberTypes : DuckType[] = struct.memberNames.map((name) => struct.members[name]);
             let rearranged : Expr.PairParameter[] = [];
             
             memberTypes.forEach((type) => rearranged.push([null, type.defaultValue()]));
@@ -301,7 +302,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
                 // get actual index if using (X = expr) notation
                 if (token){
-                    index = struct.memberNames.indexOf(token.lexeme);
+                    index = memberNames.indexOf(token.lexeme);
                     if (index < 0){
                         throw this.error(token, `Unknown member argument ${token.lexeme}`);
                     }
