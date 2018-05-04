@@ -6,7 +6,7 @@ export abstract class Expr {
 }
 
 export namespace Expr {
-    export type PairParameter = [Token | null, Expr | undefined];
+    export type PairParameter = [Token | null, Expr];
     export class Binary extends Expr {
         constructor(public left: Expr, public operator: Token, public right: Expr) {
             super();
@@ -18,7 +18,7 @@ export namespace Expr {
     }
 
     export class Call extends Expr {
-        constructor(public callee: Expr, public token: Token, public parameters: PairParameter[], public paramTypes: (DuckType|undefined)[] = []) {
+        constructor(public callee: Expr, public token: Token, public parameters: PairParameter[], public type?: DuckType) {
             super();
         }
 

@@ -168,7 +168,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             throw this.error(stmt.name, "Can't infer empty array type from assignment");
         }
 
-        let type = expr || typeExpr;
+        let type = typeExpr || expr ;
         if (!type) throw this.error(stmt.name, "Unknown variable type");
 
         if (this.symtable.getLocal(stmt.name)){
@@ -176,6 +176,9 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
 
         stmt.type = type;
+        if (!expr){
+            stmt.expr = type.defaultValue();
+        }
 
         this.symtable.add(stmt.name, EntryType.VAR, type);
     }
@@ -261,56 +264,54 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
 
         if (!(entry.type instanceof DuckType.Struct)){
-            throw this.error(expr.token, `Can't instantiate ${entry.type.toString} using operator()`);            
+            throw this.error(expr.token, `Can't instantiate ${entry.type.toString} using operator()`);
         }
 
-        let type = entry.type;        
+        let struct = entry.type;
+        expr.type = struct;
         
-
         if (expr.parameters.length > 0){
-            let paramTypes : [Token | null, DuckType | undefined][] = [];
+            let paramTypes : [Token | null, DuckType][] = [];
 
             // visit parameters
-            for (let [token, param] of expr.parameters){
-                paramTypes.push([token, param && param.accept(this)]);
+            for (let [token, paramType] of expr.parameters){
+                paramTypes.push([token, paramType.accept(this)]);
             }
 
             // rearrange parameters to match its occurence / name
 
-            let structTypes : DuckType[] = type.memberNames.map((name) => type.members[name]);
-            let rearranged : Expr.PairParameter[] = []; 
-            type.memberNames.forEach(() => rearranged.push([null, undefined]));
+            let memberTypes : DuckType[] = struct.memberNames.map((name) => struct.members[name]);
+            let rearranged : Expr.PairParameter[] = [];
+            
+            memberTypes.forEach((type) => rearranged.push([null, type.defaultValue()]));
             
             for (let i = 0; i < paramTypes.length; i++){
-                let [token, param] = paramTypes[i];
+                let [token, paramType] = paramTypes[i];
 
                 let index = i;
 
                 // get actual index if using (X = expr) notation
                 if (token){
-                    index = type.memberNames.indexOf(token.lexeme);
+                    index = struct.memberNames.indexOf(token.lexeme);
                     if (index < 0){
                         throw this.error(token, `Unknown member argument ${token.lexeme}`);
                     }
                 }
 
                 // check parameter type
-                if (param){
-                    let expectedType = structTypes[index];
+                let expectedType = memberTypes[index];
 
-                    if (!expectedType.contains(param)){
-                        throw this.error(expr.token, `Can't assign argument type ${expectedType} with ${param}`)
-                    }
+                if (!expectedType.contains(paramType)){
+                    throw this.error(expr.token, `Can't assign argument type ${expectedType} with ${paramType}`)
                 }
                 
                 rearranged[index][1] = expr.parameters[i][1];
             }
 
-            expr.paramTypes = structTypes;
             expr.parameters = rearranged;
         }
 
-        return type;
+        return struct;
     }
 
     visitGroupingExpr(expr: Expr.Grouping): DuckType {

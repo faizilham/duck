@@ -2,10 +2,12 @@ import { Expr } from "./ast/expr"
 import { Stmt } from "./ast/stmt";
 import { DuckType, Type } from "./types";
 
+const STRUCT_PREFIX = "struct$";
+
 function structConstructorTemplate(name: string, parameters: [string,string][]) : string{
 
-return `function struct$${name}(${parameters.map(([name, value]) => `${name}=${value}`).join(", ")}){
-    ${parameters.map(([name]) => `this.${name}=${name};`).join("\n    ")}
+return `function ${STRUCT_PREFIX}${name}(${parameters.map(([name]) => name).join(", ")}){
+    ${parameters.map(([name, value]) => `this.${name} = ${name} || ${value};`).join("\n    ")}
 }
 `;
 
@@ -89,7 +91,7 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         let param : [string, string][] = [];
         
         Object.keys(members).forEach(key => {
-            param.push([key, this.defaultVarTypeValue(members[key])]);
+            param.push([key, members[key].defaultValue().accept(this)]);
         });
 
         return structConstructorTemplate(stmt.name.lexeme, param);
@@ -109,28 +111,9 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
 
         if (stmt.expr){
             result += stmt.expr.accept(this);
-        } else {
-            result += this.defaultVarTypeValue(stmt.type)
         }
 
         return result + ";";
-    }
-
-    defaultVarTypeValue (type? : DuckType) : string {
-        switch(type && type.type){
-            case Type.Bool:
-                return "false";
-            case Type.Number:
-                return "0";
-            case Type.String:
-                return '""';
-            case Type.List:
-                return "[]";
-            case Type.Struct:
-                return `new struct$${(<DuckType.Struct> type).name}()`;
-        }
-
-        return "null";
     }
 
     // Expr.Visitor implementation
@@ -143,10 +126,11 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
 
     visitCallExpr(expr: Expr.Call): string {
         let callee = expr.callee.accept(this);
-        let parameters = expr.parameters.map( ([, e], i) => {
-            if (e) return e.accept(this)
-            return this.defaultVarTypeValue(expr.paramTypes[i]);
-        });
+        let parameters = expr.parameters.map( ([, e]) => e.accept(this));
+
+        if (expr.type instanceof DuckType.Struct){
+            callee = `new ${STRUCT_PREFIX}${callee}`;
+        }
 
         return `${callee}(${parameters.join(", ")})`;
     }

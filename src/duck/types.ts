@@ -1,4 +1,5 @@
-import { Token } from "./token";
+import { Token, TokenType } from "./token";
+import { Expr } from "./ast/expr";
 
 export enum Type {
     Number = 1,
@@ -11,6 +12,7 @@ export enum Type {
 export interface DuckType {
     type: Type;
     contains(d : DuckType) : boolean; // return true if this === d or this supertype of d
+    defaultValue() : Expr;
     toString() : string;
 }
 
@@ -22,6 +24,10 @@ export namespace DuckType{
 
         public contains(d : DuckType) : boolean {
             return this.type == d.type;
+        }
+
+        public defaultValue(): Expr {
+            return new Expr.Literal(0, this);            
         }
 
         public toString() : string{
@@ -38,6 +44,10 @@ export namespace DuckType{
             return this.type == d.type;
         }
 
+        public defaultValue(): Expr {
+            return new Expr.Literal("", this);            
+        }
+
         public toString() : string{
             return Type[this.type];
         }
@@ -50,6 +60,10 @@ export namespace DuckType{
 
         public contains(d : DuckType) : boolean {
             return this.type == d.type;
+        }
+
+        public defaultValue(): Expr {
+            return new Expr.Literal(false, this);            
         }
 
         public toString() : string{
@@ -79,6 +93,10 @@ export namespace DuckType{
             }
 
             return this.elementType.contains(d.elementType);
+        }
+
+        public defaultValue(): Expr {
+            return new Expr.List(new Token(TokenType.LEFT_SQUARE, "[", 0), []);
         }
 
         public isNullList() : boolean {
@@ -116,6 +134,15 @@ export namespace DuckType{
             }
 
             return true;
+        }
+
+        public defaultValue() : Expr{
+            return new Expr.Call(
+                new Expr.Variable(new Token(TokenType.IDENTIFIER, this.name, 0 )),
+                new Token(TokenType.LEFT_PAREN, "(", 0),
+                [],
+                this
+            );
         }
 
         public toString(): string {

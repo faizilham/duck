@@ -8,12 +8,12 @@ AST = {
             ("DuckType", "../types"),
         ],
         [
-            "export type PairParameter = [Token | null, Expr | undefined]"            
+            "export type PairParameter = [Token | null, Expr]"            
         ],
         [
             
             "Binary     -> left: Expr, operator: Token, right: Expr",
-            "Call       -> callee: Expr, token: Token, parameters: PairParameter[], paramTypes: (DuckType|undefined)[] = []",
+            "Call       -> callee: Expr, token: Token, parameters: PairParameter[], type?: DuckType",
             "Grouping   -> inner: Expr",
             "Indexing   -> token: Token, collection: Expr, index: Expr",
             "Literal    -> value: any, type: DuckType",

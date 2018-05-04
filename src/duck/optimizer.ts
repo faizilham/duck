@@ -179,7 +179,7 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         let parameters : Expr.PairParameter[] = [];
 
         expr.parameters.forEach(([token, expr]) =>{
-            parameters.push([token, expr && expr.accept(this)])
+            parameters.push([token, expr.accept(this)])
         });
 
         expr.parameters = parameters;
