@@ -59,6 +59,16 @@ export namespace Stmt {
         }
     }
 
+    export class SetMember extends Stmt {
+        constructor(public target: Expr.GetMember, public token: Token, public expr: Expr) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitSetMemberStmt(this);
+        }
+    }
+
     export class Struct extends Stmt {
         constructor(public name: Token, public members: Parameter[], public type?: DuckType) {
             super();
@@ -95,6 +105,7 @@ export namespace Stmt {
         visitExpressionStmt(stmt: Expression) : T;
         visitIfStmt(stmt: If) : T;
         visitSetIndexStmt(stmt: SetIndex) : T;
+        visitSetMemberStmt(stmt: SetMember) : T;
         visitStructStmt(stmt: Struct) : T;
         visitWhileStmt(stmt: While) : T;
         visitVarDeclStmt(stmt: VarDecl) : T;

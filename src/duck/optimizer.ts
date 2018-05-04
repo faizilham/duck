@@ -12,7 +12,6 @@ function isInt(x : any) : boolean{
 }
 
 export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefined> {
-
     public optimize(statements : Stmt[]) : Stmt[]{
         return this.filterEmpty(statements);
     }
@@ -88,6 +87,12 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
 
     visitSetIndexStmt(stmt: Stmt.SetIndex): Stmt | undefined {
         stmt.target = <Expr.Indexing>stmt.target.accept(this);
+        stmt.expr = this.cleanGrouping(stmt.expr.accept(this));
+        return stmt;
+    }
+
+    visitSetMemberStmt(stmt: Stmt.SetMember): Stmt | undefined {
+        stmt.target = <Expr.GetMember>stmt.target.accept(this);
         stmt.expr = this.cleanGrouping(stmt.expr.accept(this));
         return stmt;
     }
@@ -196,6 +201,12 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         } else if (expr.inner instanceof Expr.Literal){
             return expr.inner;
         }
+
+        return expr;
+    }
+
+    visitGetMemberExpr(expr: Expr.GetMember): Expr {
+        expr.object = expr.object.accept(this);
 
         return expr;
     }

@@ -125,6 +125,15 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
     }
 
+    visitSetMemberStmt(stmt: Stmt.SetMember): void {
+        let target = stmt.target.accept(this);
+        let expr = stmt.expr.accept(this);
+
+        if (!target.contains(expr)){
+            throw this.error(stmt.token, `Unmatched member and assigned value type: ${target} and ${expr}`)
+        }
+    }
+
     visitStructStmt(stmt: Stmt.Struct): void {
         let parameters : DuckType.Parameter[] = [];
 
@@ -316,6 +325,22 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
     visitGroupingExpr(expr: Expr.Grouping): DuckType {
         return expr.inner.accept(this);
+    }
+
+    visitGetMemberExpr(expr: Expr.GetMember): DuckType {
+        let object = expr.object.accept(this);
+        
+        if (!(object instanceof DuckType.Struct)){
+            throw this.error(expr.token, `Unknown operator() for type ${object}`);
+        }
+
+        let member = object.members[expr.member.lexeme];
+
+        if (!member){
+            throw this.error(expr.token, `Unknown member ${expr.member.lexeme} for type ${object}`);
+        }
+
+        return member;
     }
 
     visitIndexingExpr(expr: Expr.Indexing): DuckType {

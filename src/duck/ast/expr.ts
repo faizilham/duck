@@ -37,6 +37,16 @@ export namespace Expr {
         }
     }
 
+    export class GetMember extends Expr {
+        constructor(public token: Token, public object: Expr, public member: Token) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitGetMemberExpr(this);
+        }
+    }
+
     export class Indexing extends Expr {
         constructor(public token: Token, public collection: Expr, public index: Expr) {
             super();
@@ -91,6 +101,7 @@ export namespace Expr {
         visitBinaryExpr(expr: Binary) : T;
         visitCallExpr(expr: Call) : T;
         visitGroupingExpr(expr: Grouping) : T;
+        visitGetMemberExpr(expr: GetMember) : T;
         visitIndexingExpr(expr: Indexing) : T;
         visitLiteralExpr(expr: Literal) : T;
         visitListExpr(expr: List) : T;

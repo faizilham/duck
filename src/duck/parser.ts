@@ -66,6 +66,8 @@ export class Parser {
             stmt = new Stmt.Assignment(variable.name, expr);
         } else if (variable instanceof Expr.Indexing){
             stmt = new Stmt.SetIndex(variable, token, expr);
+        } else if (variable instanceof Expr.GetMember) {
+            stmt = new Stmt.SetMember(variable, token, expr);
         } else {
             throw this.error(token, "Invalid assignment target");
         }
@@ -244,11 +246,14 @@ export class Parser {
     private call() : Expr {
         let expr = this.primary();
         while (true){
-            if (this.match(TokenType.LEFT_SQUARE)){
+            if (this.match(TokenType.LEFT_PAREN)){ 
+                expr = this.finishCall(expr);
+            } else if (this.match(TokenType.LEFT_SQUARE)){
                 expr = new Expr.Indexing(this.previous(), expr, this.expression());
                 this.consume(TokenType.RIGHT_SQUARE, "Expect ']'");
-            } else if (this.match(TokenType.LEFT_PAREN)){ 
-                expr = this.finishCall(expr);
+            } else  if (this.match(TokenType.DOT)){
+                let member = this.consume(TokenType.IDENTIFIER, "Expect identifier");
+                expr = new Expr.GetMember(this.previous(), expr, member);
             } else {
                 break;
             }

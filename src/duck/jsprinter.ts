@@ -84,6 +84,15 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         }
     }
 
+    visitSetMemberStmt(stmt: Stmt.SetMember): string {
+        let collection = stmt.target.object.accept(this);
+        let member = stmt.target.member.lexeme;
+        
+        let expr = stmt.expr.accept(this);
+
+        return `${collection}.${member} = ${expr};`;
+    }
+
     visitStructStmt(stmt: Stmt.Struct): string {
         // return `// struct ${stmt.name.lexeme} constructor`;
 
@@ -137,6 +146,12 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
 
     visitGroupingExpr(expr: Expr.Grouping): string {
         return `(${expr.inner.accept(this)})`;
+    }
+
+    visitGetMemberExpr(expr: Expr.GetMember): string {
+        let object = expr.object.accept(this);
+
+        return `${object}.${expr.member.lexeme}`;
     }
 
     visitIndexingExpr(expr: Expr.Indexing): string {
