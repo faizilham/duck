@@ -1,25 +1,53 @@
 import { Token, TokenType } from "./token";
 import { Expr } from "./ast/expr";
+import { Map } from "./map";
 
 export enum Type {
-    Number = 1,
+    Void,
+    Number,
     String,
     Bool,
     List,
-    Struct
+    Struct,
+    Func
 }
 
-export interface DuckType {
-    type: Type;
-    contains(d : DuckType) : boolean; // return true if this === d or this supertype of d
-    defaultValue() : Expr;
-    toString() : string;
+let BaseMethods = new Map<DuckType.Func>();
+
+export abstract class DuckType {
+    public readonly type: Type = Type.Void;
+    public abstract contains(d : DuckType) : boolean; // return true if this === d or this supertype of d
+    public abstract defaultValue() : Expr;
+
+    private methods = new Map<DuckType.Func>();
+
+    public getMethod(name: string) : DuckType.Func{
+        return this.methods.get(name) || BaseMethods.get(name);
+    }
+
+    public toString() : string{
+        return Type[this.type];
+    }
 }
 
 export namespace DuckType{
     export type Parameter = [string, DuckType];
 
-    export class DuckNumber implements DuckType {
+    export class DuckVoid extends DuckType {
+        public readonly type : Type = Type.Void;
+
+        public contains(d : DuckType) : boolean {
+            return this.type == d.type;
+        }
+
+        public defaultValue(): Expr {
+            return new Expr.Literal(null, this);
+        }
+    }
+
+    export const Void = new DuckVoid();
+    
+    export class DuckNumber extends DuckType {
         public readonly type : Type = Type.Number;
 
         public contains(d : DuckType) : boolean {
@@ -29,15 +57,11 @@ export namespace DuckType{
         public defaultValue(): Expr {
             return new Expr.Literal(0, this);            
         }
-
-        public toString() : string{
-            return Type[this.type];
-        }
     }
 
     export const Number = new DuckNumber();
 
-    export class DuckString implements DuckType {
+    export class DuckString extends DuckType {
         public readonly type : Type = Type.String;
 
         public contains(d : DuckType) : boolean {
@@ -47,15 +71,11 @@ export namespace DuckType{
         public defaultValue(): Expr {
             return new Expr.Literal("", this);            
         }
-
-        public toString() : string{
-            return Type[this.type];
-        }
     }
 
     export const String = new DuckString();
 
-    export class DuckBool implements DuckType {
+    export class DuckBool extends DuckType {
         public readonly type : Type = Type.Bool;
 
         public contains(d : DuckType) : boolean {
@@ -65,18 +85,16 @@ export namespace DuckType{
         public defaultValue(): Expr {
             return new Expr.Literal(false, this);            
         }
-
-        public toString() : string{
-            return Type[this.type];
-        }
     }
 
     export const Bool = new DuckBool();
 
-    export class List implements DuckType {
+    export class List extends DuckType {
         public readonly type : Type = Type.List;
 
-        constructor(public elementType?: DuckType){}
+        constructor(public elementType?: DuckType){
+            super();
+        }
 
         public contains(d : DuckType) : boolean {
             if (!(d instanceof List)){
@@ -111,13 +129,14 @@ export namespace DuckType{
         }
     }
 
-    export class Struct implements DuckType {
+    export class Struct extends DuckType {
         public readonly type: Type = Type.Struct;
-        public members : { [s: string]: DuckType } = {};
+        public readonly members = new Map<DuckType>();
 
-        constructor(public name : string, parameters : Parameter[]){
+        constructor(public readonly name : string, parameters : Parameter[]){
+            super();
             for (let param of parameters){
-                this.members[param[0]] = param[1];
+                this.members.set(param[0], param[1]);
             }
         }
 
@@ -125,8 +144,8 @@ export namespace DuckType{
             if (!(d instanceof Struct)) return false;
 
             // check if all member in this is exist and super/same type in d member
-            for (let key in this.members){
-                if (!d.members[key] || !this.members[key].contains(d.members[key])){
+            for (let key of this.members.keys()){
+                if (!d.members.get(key) || !this.members.get(key).contains(d.members.get(key))){
                     return false;
                 }
             }
@@ -147,4 +166,50 @@ export namespace DuckType{
             return this.name;
         }
     }
+
+    export class Func extends DuckType {
+        public readonly type: Type = Type.Func;
+
+        constructor(public readonly name : string, public readonly parameters : DuckType[], public readonly returnType : DuckType){
+            super();
+        }
+
+        public contains(d: DuckType): boolean {
+            if (!(d instanceof Func))
+                return false;
+
+            if (this.parameters.length !== d.parameters.length)
+                return false;
+
+            if (!this.returnType.contains(d.returnType))
+                return false;
+
+            for (let i = 0; i < this.parameters.length; i++){
+                if (!this.parameters[i].contains(d.parameters[i]))
+                    return false;
+            }
+
+            return true;
+        }
+
+        defaultValue(): Expr {
+            return new Expr.Literal(null, this); // TODO: handle this
+        }
+
+        toString(): string {
+            let parameters = this.parameters.map(d => Type[d.type]).join(", ");
+
+            let returnType = "";
+
+            if (!Void.contains(this.returnType)){
+                returnType = " -> " + Type[this.returnType.type];   
+            }
+
+            return `(${parameters})${returnType}`;
+        }
+    }
+
+    (function initBaseMethods(){
+        BaseMethods.set("toString", new Func("toString", [], String));
+    })();
 }

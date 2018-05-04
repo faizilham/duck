@@ -8,6 +8,7 @@ import {Stmt} from "./ast/stmt"
 import { DuckType, Type } from "./types";
 import { Token, TokenType } from "./token";
 import { Reporter } from "./error"
+import { Map } from "./map";
 
 enum EntryType {
     VAR = 1,
@@ -21,11 +22,11 @@ class SymbolEntry {
 }
 
 class SymbolTable {
-    private valueMap : {[s: string] : SymbolEntry}  = {};
+    private valueMap = new Map<SymbolEntry>();
     constructor(public parent? : SymbolTable ){}
 
     public add(name : Token, entryType: EntryType, type: DuckType){
-        this.valueMap[name.lexeme] = new SymbolEntry(entryType, type);
+        this.valueMap.set(name.lexeme, new SymbolEntry(entryType, type));
     }
 
     public get(name : Token) : SymbolEntry | undefined {
@@ -39,7 +40,7 @@ class SymbolTable {
     }
 
     public getLocal(name : Token) : SymbolEntry | undefined {
-        return this.valueMap[name.lexeme];
+        return this.valueMap.get(name.lexeme);
     }
 
     public size() : number {
@@ -47,7 +48,7 @@ class SymbolTable {
     }
 
     public clear(){
-        this.valueMap = {};
+        this.valueMap.clear()
     }
 }
 
@@ -261,6 +262,11 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
         let type = expr.callee.accept(this);
 
+        // TODO: change this to proper function call check
+        if (type instanceof DuckType.Func && type.parameters.length === 0){
+            return type.returnType;
+        }
+
         throw this.error(expr.token, `Unknown operator() for type ${type}`);
     }
 
@@ -288,8 +294,8 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             }
 
             // rearrange parameters to match its occurence / name
-            const memberNames = Object.keys(struct.members);
-            const memberTypes = memberNames.map((name) => struct.members[name]);
+            const memberNames = struct.members.keys();
+            const memberTypes = memberNames.map((name) => struct.members.get(name));
 
             let rearranged : Expr.PairParameter[] = [];
             
@@ -330,12 +336,18 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
     visitGetMemberExpr(expr: Expr.GetMember): DuckType {
         let object = expr.object.accept(this);
+
+        let memberFunc = object.getMethod(expr.member.lexeme);
+
+        if (memberFunc){
+            return memberFunc;
+        }
         
         if (!(object instanceof DuckType.Struct)){
-            throw this.error(expr.token, `Unknown operator() for type ${object}`);
+            throw this.error(expr.token, `Unknown operator . for type ${object}`);
         }
 
-        let member = object.members[expr.member.lexeme];
+        let member = object.members.get(expr.member.lexeme);
 
         if (!member){
             throw this.error(expr.token, `Unknown member ${expr.member.lexeme} for type ${object}`);

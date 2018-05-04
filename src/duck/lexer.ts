@@ -5,8 +5,9 @@
 import {Token, TokenType} from "./token"
 import {DuckType} from "./types"
 import {Reporter} from "./error"
+import {Map} from "./map";
 
-const ReservedWords : any = {
+const ReservedWords = new Map<TokenType>({
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
 
@@ -25,7 +26,7 @@ const ReservedWords : any = {
 
     "let": TokenType.LET,
     "print": TokenType.PRINT, // temporarily
-};
+});
 
 export class Lexer {
     private current : number = 0;
@@ -154,7 +155,7 @@ export class Lexer {
         }
 
         let id : string = this.source.substring(this.start, this.current);
-        let token_type : TokenType = ReservedWords[id] || TokenType.IDENTIFIER;
+        let token_type : TokenType = ReservedWords.get(id) || TokenType.IDENTIFIER;
 
         switch(token_type){
             case TokenType.TRUE: this.addToken(token_type, true, DuckType.Bool); break;

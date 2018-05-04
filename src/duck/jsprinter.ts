@@ -87,7 +87,7 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     visitSetMemberStmt(stmt: Stmt.SetMember): string {
         let collection = stmt.target.object.accept(this);
         let member = stmt.target.member.lexeme;
-        
+
         let expr = stmt.expr.accept(this);
 
         return `${collection}.${member} = ${expr};`;
@@ -99,8 +99,8 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         let members = (<DuckType.Struct>stmt.type).members;
         let param : [string, string][] = [];
         
-        Object.keys(members).forEach(key => {
-            param.push([key, members[key].defaultValue().accept(this)]);
+        members.keys().forEach(key => {
+            param.push([key, members.get(key).defaultValue().accept(this)]);
         });
 
         return structConstructorTemplate(stmt.name.lexeme, param);
