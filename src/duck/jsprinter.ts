@@ -50,7 +50,7 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     }
 
     visitFuncStmt(stmt: Stmt.Func): string {
-        let result = `function func$${stmt.name.lexeme}(${stmt.parameters.map(x => x[0].lexeme).join(", ")}){\n`;
+        let result = `function ${stmt.name.lexeme}(${stmt.parameters.map(x => x[0].lexeme).join(", ")}){\n`;
 
         this.currentBlock++;
         for (let statement of stmt.body){
@@ -117,7 +117,7 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
 
         const name = stmt.name.lexeme;
 
-        let result = `function ${STRUCT_PREFIX}${name}(${parameters.map(([name]) => name).join(", ")}){\n`;
+        let result = `function ${name}(${parameters.map(([name]) => name).join(", ")}){\n`;
 
         this.currentBlock++;
         for (let [name, value] of parameters){
@@ -161,7 +161,7 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         let parameters = expr.parameters.map( ([, e]) => e.accept(this));
 
         if (expr.type instanceof DuckType.Struct){
-            callee = `new ${STRUCT_PREFIX}${callee}`;
+            callee = `new ${callee}`;
         }
 
         return `${callee}(${parameters.join(", ")})`;

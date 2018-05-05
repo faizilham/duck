@@ -369,27 +369,35 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         throw this.error(expr.token, `Unknown operator() for type ${type}`);
     }
 
-    simpleCall(expr : Expr.Call) : DuckType {
+    private simpleCall(expr: Expr.Call) : DuckType{
         let callee = (<Expr.Variable> expr.callee);
-        let entry = this.symtable.get(callee.name)
+        let entry = this.symtable.get(callee.name);
 
-        if (!entry || entry.entryType !== EntryType.TYPE){
-            throw this.error(expr.token, `Unknown type ${callee.name.lexeme}`);
+        if (!entry){
+            throw this.error(expr.token, `Unknown identifier ${callee.name.lexeme}`);
         }
 
-        if (!(entry.type instanceof DuckType.Struct)){
-            throw this.error(expr.token, `Can't instantiate ${entry.type.toString} using operator()`);
+        if (entry.entryType === EntryType.TYPE){
+            return this.structInstantiate(expr, entry.type);
         }
 
-        let struct = entry.type;
+        return this.functionCall(expr, entry.type);
+    }
+
+    private structInstantiate(expr : Expr.Call, exprType : DuckType) : DuckType {
+        if (!(exprType instanceof DuckType.Struct)){
+            throw this.error(expr.token, `Can't instantiate ${exprType}`);
+        }
+
+        let struct = exprType;
         expr.type = struct;
         
         if (expr.parameters.length > 0){
-            let paramTypes : [Token | null, DuckType][] = [];
+            let argTypes : [Token | null, DuckType][] = [];
 
             // visit parameters
-            for (let [token, paramType] of expr.parameters){
-                paramTypes.push([token, paramType.accept(this)]);
+            for (let [token, argType] of expr.parameters){
+                argTypes.push([token, argType.accept(this)]);
             }
 
             // rearrange parameters to match its occurence / name
@@ -400,8 +408,8 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             
             memberTypes.forEach((type) => rearranged.push([null, type.defaultValue()]));
             
-            for (let i = 0; i < paramTypes.length; i++){
-                let [token, paramType] = paramTypes[i];
+            for (let i = 0; i < argTypes.length; i++){
+                let [token, argType] = argTypes[i];
 
                 let index = i;
 
@@ -416,8 +424,8 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
                 // check parameter type
                 let expectedType = memberTypes[index];
 
-                if (!expectedType.contains(paramType)){
-                    throw this.error(expr.token, `Can't assign argument type ${expectedType} with ${paramType}`)
+                if (!expectedType.contains(argType)){
+                    throw this.error(expr.token, `Can't assign argument type ${expectedType} with ${argType}`)
                 }
                 
                 rearranged[index][1] = expr.parameters[i][1];
@@ -427,6 +435,36 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
 
         return struct;
+    }
+
+    private functionCall(expr : Expr.Call, exprType : DuckType) : DuckType {
+        if (!(exprType instanceof DuckType.Func)){
+            throw this.error(expr.token, `Unknown operator() for type ${exprType}`);
+        }
+
+        let funcType = exprType;
+
+        if (expr.parameters.length !== funcType.parameters.length){
+            throw this.error(expr.token, `Wrong number of arguments (given ${expr.parameters.length}, expected ${funcType.parameters.length})`);
+        }
+
+        for (let i = 0; i < funcType.parameters.length; i++){
+            let expectedType = funcType.parameters[i];
+            let [argToken, argExpr] = expr.parameters[i];
+
+            // make sure it isn't called using (a1 = e1, a2 = e2, ...) construct
+            if (argToken){
+                throw this.error(argToken, `Cannot call a function using = inside arguments`);
+            }
+
+            let argType = argExpr.accept(this);
+
+            if (!expectedType.contains(argType)){
+                throw this.error(expr.token, `Wrong argument type in argument #${i} (given ${argType}, expected ${expectedType})`);
+            }
+        }
+
+        return funcType.returnType;
     }
 
     visitGroupingExpr(expr: Expr.Grouping): DuckType {

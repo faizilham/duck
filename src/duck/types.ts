@@ -198,14 +198,9 @@ export namespace DuckType{
 
         toString(): string {
             let parameters = this.parameters.join(", ");
+            let returnType = Type[this.returnType.type];
 
-            let returnType = "";
-
-            if (!Void.contains(this.returnType)){
-                returnType = " -> " + Type[this.returnType.type];   
-            }
-
-            return `(${parameters})${returnType}`;
+            return `(${parameters}) -> ${returnType}`;
         }
     }
 
