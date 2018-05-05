@@ -60,6 +60,7 @@ AST = {
             "SetIndex   -> target: Expr.Indexing, token: Token, expr: Expr",
             "SetMember  -> target: Expr.GetMember, token: Token, expr: Expr",
             "Struct     -> name: Token, members: Parameter[], type? : DuckType",
+            "Return     -> token: Token, expr?: Expr",
             "While      -> token: Token, condition: Expr, body: Stmt",
             "VarDecl    -> name: Token, typeExpr?: TypeExpr, expr?: Expr, type?: DuckType",
         ]

@@ -54,6 +54,7 @@ export class Parser {
         if (this.match(TokenType.IF)) return this.ifStatement();
         if (this.match(TokenType.WHILE)) return this.whileStatement();
         if (this.match(TokenType.LEFT_BRACE)) return this.blockStatement();
+        if (this.match(TokenType.RETURN)) return this.returnStatement();
 
         return this.expressionStatement();
     }
@@ -171,6 +172,24 @@ export class Parser {
         return new Stmt.If(token, condition, thenBranch, elseBranch);
     }
 
+    private returnStatement() : Stmt {
+        let token = this.previous();
+        let expr : Expr | undefined = undefined;
+
+        if (!this.isAtEnd()){
+            let next = this.peek();
+
+            // read expression if next token is in the same line and not semicolon
+            if (next.line === token.line && next.tokenType !== TokenType.SEMICOLON){
+                expr = this.expression();
+            }
+        }
+
+        this.match(TokenType.SEMICOLON);
+
+        return new Stmt.Return(token, expr);
+    }
+
     private structDeclaration() : Stmt {
         let name = this.consume(TokenType.IDENTIFIER, "Expect a struct name");
 
@@ -242,7 +261,7 @@ export class Parser {
         }
         
         if (!texpr){
-            throw this.error(this.peek(), "Expect type.");
+            throw this.error(this.previous(), "Expect type.");
         }
 
         // match array types
@@ -353,14 +372,14 @@ export class Parser {
             return new Expr.Grouping(expr);
         }
         
-        throw this.error(this.peek(), "Expect expression.");
+        throw this.error(this.previous(), "Expect expression.");
     }
 
     private list() : Expr {
         let token = this.previous();
         let elements : Expr[] = [];
 
-        if (this.peek().tokenType !== TokenType.RIGHT_SQUARE){
+        if (this.check(TokenType.RIGHT_SQUARE)){
             do {
                 elements.push(this.expression());
             } while (this.match(TokenType.COMMA));
@@ -437,6 +456,8 @@ export class Parser {
                 case TokenType.IF:
                 case TokenType.WHILE:
                 case TokenType.PRINT:
+                case TokenType.FUNC:
+                case TokenType.RETURN:
                     return;
                 
                 default:

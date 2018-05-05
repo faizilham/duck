@@ -197,7 +197,7 @@ export namespace DuckType{
         }
 
         toString(): string {
-            let parameters = this.parameters.map(d => Type[d.type]).join(", ");
+            let parameters = this.parameters.join(", ");
 
             let returnType = "";
 

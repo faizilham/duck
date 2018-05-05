@@ -89,6 +89,16 @@ export namespace Stmt {
         }
     }
 
+    export class Return extends Stmt {
+        constructor(public token: Token, public expr?: Expr) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitReturnStmt(this);
+        }
+    }
+
     export class While extends Stmt {
         constructor(public token: Token, public condition: Expr, public body: Stmt) {
             super();
@@ -118,6 +128,7 @@ export namespace Stmt {
         visitSetIndexStmt(stmt: SetIndex) : T;
         visitSetMemberStmt(stmt: SetMember) : T;
         visitStructStmt(stmt: Struct) : T;
+        visitReturnStmt(stmt: Return) : T;
         visitWhileStmt(stmt: While) : T;
         visitVarDeclStmt(stmt: VarDecl) : T;
     }

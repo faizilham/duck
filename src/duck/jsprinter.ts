@@ -84,6 +84,14 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         return result;
     }
 
+    visitReturnStmt(stmt: Stmt.Return): string {
+        if (stmt.expr){
+            return `return ${stmt.expr.accept(this)};`;
+        } else {
+            return "return;";
+        }
+    }
+
     visitSetIndexStmt(stmt: Stmt.SetIndex): string {
         let collection = stmt.target.collection.accept(this);
         let index = stmt.target.index.accept(this);

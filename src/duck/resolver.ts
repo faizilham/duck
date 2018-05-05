@@ -52,7 +52,31 @@ class SymbolTable {
     }
 }
 
-export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckType>, Stmt.Visitor<void> {
+export class ReturnValues {
+    public returnPoints : [Token, DuckType][] = [];
+    public complete = false;
+
+    constructor(token?: Token, type?: DuckType){
+        if (token && type){
+            this.returnPoints.push([token, type]);
+            this.complete = true;
+        }
+    }
+    
+    public add(ret : ReturnValues | void, overrideComplete : boolean = false){
+        if (!ret) return;
+
+        this.returnPoints.push(...ret.returnPoints);
+        if (overrideComplete) this.complete = ret.complete;
+        else if (ret.complete) this.complete = true;
+    }
+
+    public addDefault(token: Token, type: DuckType = DuckType.Void){
+        this.returnPoints.push([token, type]);
+    }
+}
+
+export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckType>, Stmt.Visitor<ReturnValues | void> {
     private symtable : SymbolTable = new SymbolTable(); 
 
     public resolve(statements : Stmt[]){
@@ -72,7 +96,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
     /** Statement Visitor **/
 
-    visitAssignmentStmt(stmt: Stmt.Assignment): void {
+    visitAssignmentStmt(stmt: Stmt.Assignment): ReturnValues | void {
         let expr = stmt.expr.accept(this);
 
         let variable = this.symtable.get(stmt.name);
@@ -86,72 +110,111 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
     }
 
-    visitBlockStmt(stmt: Stmt.Block): void {
+    visitBlockStmt(stmt: Stmt.Block): ReturnValues | void {
         let currentTable = this.symtable;
         this.symtable = new SymbolTable(this.symtable);
 
-        for (let statement of stmt.statements){                  
-            statement.accept(this);
+        try {
+            let returnVal = new ReturnValues();
+
+            for (let statement of stmt.statements){                  
+                returnVal.add(statement.accept(this));
+            }
+
+            stmt.localVars = this.symtable.size();
+
+            return returnVal;
+        } finally {
+            this.symtable = currentTable;
         }
-
-        stmt.localVars = this.symtable.size();
-
-        this.symtable = currentTable;
     }
 
-    visitExpressionStmt(stmt: Stmt.Expression): void {
+    visitExpressionStmt(stmt: Stmt.Expression): ReturnValues | void {
         stmt.expr.accept(this);
     }
 
-    visitFuncStmt(stmt: Stmt.Func): void {
+    visitFuncStmt(stmt: Stmt.Func): ReturnValues | void {
         let currentTable = this.symtable;
         this.symtable = new SymbolTable(this.symtable);
 
-        // visit parameter and add to function symtable
-        let parameters : [string, DuckType][] = [];
-        for (let [token, typeExpr] of stmt.parameters){
-            let paramType = typeExpr.accept(this);
+        try {
+            // visit parameter and add to function symtable
+            let parameters : [string, DuckType][] = [];
+            for (let [token, typeExpr] of stmt.parameters){
+                let paramType = typeExpr.accept(this);
 
-            parameters.push([token.lexeme, paramType]);
-            this.symtable.add(token, EntryType.VAR, paramType);
+                parameters.push([token.lexeme, paramType]);
+                this.symtable.add(token, EntryType.VAR, paramType);
+            }
+
+            let returnType = DuckType.Void;
+
+            if (stmt.returnType){
+                returnType = stmt.returnType.accept(this);
+            }
+
+            let funcType = new DuckType.Func(stmt.name.lexeme, parameters.map(x => x[1]), returnType);
+            stmt.type = funcType;
+
+            // add function to upper context symtable
+            currentTable.add(stmt.name, EntryType.VAR, funcType);
+
+            let returnVal = new ReturnValues();   
+
+            for (let statement of stmt.body){
+                returnVal.add(statement.accept(this));
+            }
+
+            if (!returnVal.complete){
+                if (!funcType.returnType.contains(DuckType.Void)){
+                    throw this.error(stmt.name, `Incomplete return values for function ${stmt.name.lexeme}`);
+                }
+            }
+    
+            // check return value in every branch
+
+            for (let [token, type] of returnVal.returnPoints){
+                if (!funcType.returnType.contains(type)){
+                    throw this.error(token, `Cannot return value of type ${type} for function ${stmt.name.lexeme} ${funcType}`);
+                }
+            }
+            
+        } finally{
+            this.symtable = currentTable;
         }
-
-        let returnType = DuckType.Void;
-
-        if (stmt.returnType){
-            returnType = stmt.returnType.accept(this);
-        }
-
-        let funcType = new DuckType.Func(stmt.name.lexeme, parameters.map(x => x[1]), returnType);
-        stmt.type = funcType;
-
-        // add function to upper context symtable
-        currentTable.add(stmt.name, EntryType.VAR, funcType); 
-
-        for (let statement of stmt.body){
-            statement.accept(this);
-        }
-
-        // TODO: check return value in every branch
-
-        this.symtable = currentTable;
     }
 
-    visitIfStmt(stmt: Stmt.If): void {
+    visitIfStmt(stmt: Stmt.If): ReturnValues | void {
         let condition = stmt.condition.accept(this);
 
         if (!DuckType.Bool.contains(condition)){
             throw this.error(stmt.token, "Condition has to be boolean");
         }
 
-        stmt.thenBranch.accept(this);
+        let returnVal = new ReturnValues();
+
+        returnVal.add(stmt.thenBranch.accept(this));
 
         if (stmt.elseBranch){
-            stmt.elseBranch.accept(this);
+            returnVal.add(stmt.elseBranch.accept(this), true);
+        } else {
+            returnVal.complete = false;
         }
+
+        return returnVal;
     }
 
-    visitSetIndexStmt(stmt: Stmt.SetIndex): void {
+    visitReturnStmt(stmt: Stmt.Return): ReturnValues | void {
+        let type = DuckType.Void;
+
+        if (stmt.expr){
+            type = stmt.expr.accept(this);
+        }
+
+        return new ReturnValues(stmt.token, type);
+    }
+
+    visitSetIndexStmt(stmt: Stmt.SetIndex): ReturnValues | void {
         let target = stmt.target.accept(this);
         let expr = stmt.expr.accept(this);
 
@@ -160,7 +223,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
     }
 
-    visitSetMemberStmt(stmt: Stmt.SetMember): void {
+    visitSetMemberStmt(stmt: Stmt.SetMember): ReturnValues | void {
         let target = stmt.target.accept(this);
         let expr = stmt.expr.accept(this);
 
@@ -169,7 +232,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         }
     }
 
-    visitStructStmt(stmt: Stmt.Struct): void {
+    visitStructStmt(stmt: Stmt.Struct): ReturnValues | void {
         let parameters : DuckType.Parameter[] = [];
 
         for (let [member, typeexpr] of stmt.members){
@@ -182,20 +245,20 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
         stmt.type = structType;
 
-        this.symtable.add(stmt.name, EntryType.TYPE, structType);        
+        this.symtable.add(stmt.name, EntryType.TYPE, structType);
     }
 
-    visitWhileStmt(stmt: Stmt.While): void {
+    visitWhileStmt(stmt: Stmt.While): ReturnValues | void {
         let condition = stmt.condition.accept(this);
 
         if (!DuckType.Bool.contains(condition)){
             throw this.error(stmt.token, "Condition has to be boolean");
         }
 
-        stmt.body.accept(this);
+        return stmt.body.accept(this);
     }
 
-    visitVarDeclStmt(stmt: Stmt.VarDecl): void {
+    visitVarDeclStmt(stmt: Stmt.VarDecl): ReturnValues | void {
         let expr, typeExpr;        
 
         if (stmt.expr){

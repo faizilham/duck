@@ -92,6 +92,14 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         return stmt;
     }
 
+    visitReturnStmt(stmt: Stmt.Return): Stmt | undefined {
+        if (stmt.expr){
+            stmt.expr = stmt.expr.accept(this);
+        }
+        
+        return stmt;
+    }
+
     visitSetIndexStmt(stmt: Stmt.SetIndex): Stmt | undefined {
         stmt.target = <Expr.Indexing>stmt.target.accept(this);
         stmt.expr = this.cleanGrouping(stmt.expr.accept(this));
