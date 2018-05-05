@@ -256,7 +256,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             case TokenType.PLUS:
                 if (left == right){
                     if (DuckType.Number.contains(left) || DuckType.String.contains(left)){
-                        return left;
+                        expr.type = left
                     }
                 }
             break;
@@ -265,14 +265,14 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             case TokenType.STAR:
             case TokenType.SLASH:
                 if (left == right && DuckType.Number.contains(left)){
-                    return left;
+                    expr.type = left                    
                 }
             break;
 
             case TokenType.BANG_EQUAL:
             case TokenType.EQUAL_EQUAL:
                 if (left == right){
-                    return DuckType.Bool;
+                    expr.type = DuckType.Bool                    
                 }
             break;
 
@@ -281,10 +281,12 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             case TokenType.LESS:
             case TokenType.LESS_EQUAL:
                 if (left == right && DuckType.Number.contains(left)){
-                    return DuckType.Bool;
+                    expr.type = DuckType.Bool;
                 }
             break;
         }
+
+        if (expr.type) return expr.type;
 
         throw this.error(expr.operator, `Unknown operator ${expr.operator.lexeme} for type ${left} and ${right}`);
     }
@@ -365,7 +367,8 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
     }
 
     visitGroupingExpr(expr: Expr.Grouping): DuckType {
-        return expr.inner.accept(this);
+        expr.type = expr.inner.accept(this);
+        return expr.type
     }
 
     visitGetMemberExpr(expr: Expr.GetMember): DuckType {
@@ -387,6 +390,8 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             throw this.error(expr.token, `Unknown member ${expr.member.lexeme} for type ${object}`);
         }
 
+        expr.type = member;
+
         return member;
     }
 
@@ -406,6 +411,8 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
         if (!DuckType.Number.contains(index)){
             throw this.error(expr.token, `Can't use type ${collection} as index`);
         }
+
+        expr.type = collection.elementType;
         
         return collection.elementType;
     }
@@ -430,7 +437,9 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
             i++;
         }
 
-        return new DuckType.List(elementType);
+        expr.type = new DuckType.List(elementType);
+
+        return expr.type;
     }
 
     visitUnaryExpr(expr: Expr.Unary): DuckType {
@@ -438,12 +447,14 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
         switch(expr.operator.tokenType){
             case TokenType.MINUS:
-                if (DuckType.Number.contains(right)) return right;
+                if (DuckType.Number.contains(right)) expr.type = right;
             break;
             case TokenType.BANG:
-                if (DuckType.Bool.contains(right)) return right;
+                if (DuckType.Bool.contains(right)) expr.type = right;
             break;
         }
+
+        if (expr.type) return expr.type;
 
         throw this.error(expr.operator, `Unknown operator ${expr.operator.lexeme} for type ${right}`);
     }
@@ -451,8 +462,10 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
     visitVariableExpr(expr: Expr.Variable): DuckType {
         let variable = this.symtable.get(expr.name);
 
-        if (variable && variable.entryType == EntryType.VAR)
+        if (variable && variable.entryType == EntryType.VAR){
+            expr.type = variable.type;
             return variable.type;
+        }
         
         throw this.error(expr.name, `Unknown identifier ${expr.name.lexeme}`);
     }
