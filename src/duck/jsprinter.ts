@@ -4,15 +4,6 @@ import { DuckType, Type } from "./types";
 
 const STRUCT_PREFIX = "struct$";
 
-function structConstructorTemplate(name: string, parameters: [string,string][]) : string{
-
-return `function ${STRUCT_PREFIX}${name}(${parameters.map(([name]) => name).join(", ")}){
-    ${parameters.map(([name, value]) => `this.${name} = ${name} || ${value};`).join("\n    ")}
-}
-`;
-
-}
-
 export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
     private currentBlock = 0;
     public options = {
@@ -118,13 +109,24 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         // return `// struct ${stmt.name.lexeme} constructor`;
 
         let members = (<DuckType.Struct>stmt.type).members;
-        let param : [string, string][] = [];
+        let parameters : [string, string][] = [];
         
         members.keys().forEach(key => {
-            param.push([key, members.get(key).defaultValue().accept(this)]);
+            parameters.push([key, members.get(key).defaultValue().accept(this)]);
         });
 
-        return structConstructorTemplate(stmt.name.lexeme, param);
+        const name = stmt.name.lexeme;
+
+        let result = `function ${STRUCT_PREFIX}${name}(${parameters.map(([name]) => name).join(", ")}){\n`;
+
+        this.currentBlock++;
+        for (let [name, value] of parameters){
+            result += this.tabulate(`this.${name} = ${name} || ${value};\n`);
+        }
+        this.currentBlock--;
+        result += this.tabulate("}\n");
+
+        return result;
     }
 
     visitWhileStmt(stmt: Stmt.While): string {
