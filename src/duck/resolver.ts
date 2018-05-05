@@ -88,7 +88,7 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
     visitBlockStmt(stmt: Stmt.Block): void {
         let currentTable = this.symtable;
-        this.symtable = new SymbolTable(this.symtable);        
+        this.symtable = new SymbolTable(this.symtable);
 
         for (let statement of stmt.statements){                  
             statement.accept(this);
@@ -101,6 +101,40 @@ export class Resolver implements Expr.Visitor<DuckType>, TypeExpr.Visitor<DuckTy
 
     visitExpressionStmt(stmt: Stmt.Expression): void {
         stmt.expr.accept(this);
+    }
+
+    visitFuncStmt(stmt: Stmt.Func): void {
+        let currentTable = this.symtable;
+        this.symtable = new SymbolTable(this.symtable);
+
+        // visit parameter and add to function symtable
+        let parameters : [string, DuckType][] = [];
+        for (let [token, typeExpr] of stmt.parameters){
+            let paramType = typeExpr.accept(this);
+
+            parameters.push([token.lexeme, paramType]);
+            this.symtable.add(token, EntryType.VAR, paramType);
+        }
+
+        let returnType = DuckType.Void;
+
+        if (stmt.returnType){
+            returnType = stmt.returnType.accept(this);
+        }
+
+        let funcType = new DuckType.Func(stmt.name.lexeme, parameters.map(x => x[1]), returnType);
+        stmt.type = funcType;
+
+        // add function to upper context symtable
+        currentTable.add(stmt.name, EntryType.VAR, funcType); 
+
+        for (let statement of stmt.body){
+            statement.accept(this);
+        }
+
+        // TODO: check return value in every branch
+
+        this.symtable = currentTable;
     }
 
     visitIfStmt(stmt: Stmt.If): void {

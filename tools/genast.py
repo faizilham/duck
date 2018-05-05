@@ -8,12 +8,15 @@ AST = {
             ("DuckType", "../types"),
         ],
         [
+            "public type: DuckType | undefined"
+        ],
+        [
             "export type PairParameter = [Token | null, Expr]"            
         ],
         [
             
             "Binary     -> left: Expr, operator: Token, right: Expr",
-            "Call       -> callee: Expr, token: Token, parameters: PairParameter[], type?: DuckType",
+            "Call       -> callee: Expr, token: Token, parameters: PairParameter[], type: DuckType | undefined = undefined",
             "Grouping   -> inner: Expr",
             "GetMember  -> token: Token, object: Expr, member: Token",
             "Indexing   -> token: Token, collection: Expr, index: Expr",
@@ -29,6 +32,7 @@ AST = {
             ("DuckType", "../types"),
         ],
         [],
+        [],
         [   
             "Basic      -> typeExpr: Token, type: DuckType",
             "List       -> typeExpr: Token, element: TypeExpr",
@@ -42,6 +46,7 @@ AST = {
             ("TypeExpr", "./typeexpr"),
             ("DuckType", "../types"),            
         ],
+        [],
         [
             "export type Parameter = [Token, TypeExpr]"
         ],
@@ -50,6 +55,7 @@ AST = {
             "Assignment -> name: Token, expr: Expr",
             "Block      -> statements: Stmt[], localVars : number = 0",
             "Expression -> expr: Expr",
+            "Func       -> name: Token, parameters: Parameter[], body: Stmt[], returnType?: TypeExpr, type?: DuckType",
             "If         -> token: Token, condition: Expr, thenBranch: Stmt, elseBranch?: Stmt",
             "SetIndex   -> target: Expr.Indexing, token: Token, expr: Expr",
             "SetMember  -> target: Expr.GetMember, token: Token, expr: Expr",
@@ -106,7 +112,7 @@ def parse_types(type_data):
     
     return types
 
-def define_ast(basename, imports, baseprops, type_data):
+def define_ast(basename, imports, baseprops, exports, type_data):
     with open(output_dir + "/" + basename.lower() + ".ts", "w") as writer:
         extend_writer(writer)
 
@@ -116,6 +122,9 @@ def define_ast(basename, imports, baseprops, type_data):
         writer.writeln()
 
         writer.start_block("export abstract class {}".format(basename))
+
+        for prop in baseprops:
+            writer.writeln("{};".format(prop))
 
         writer.writeln("public abstract accept<T>(visitor : {}.Visitor<T>) : T;".format(basename))
 
@@ -127,8 +136,8 @@ def define_ast(basename, imports, baseprops, type_data):
         # AST Classes
         writer.start_block("export namespace {}".format(basename))
 
-        for props in baseprops:
-            writer.writeln("{};".format(props))
+        for ex in exports:
+            writer.writeln("{};".format(ex))
 
         for (classname, fields) in types:
             writer.start_block("export class {} extends {}".format(classname, basename))
@@ -158,5 +167,5 @@ def define_ast(basename, imports, baseprops, type_data):
         writer.end_block()
 
 
-for (basename, (imports, baseprops, types)) in AST.items():
-    define_ast(basename, imports, baseprops, types)
+for (basename, (imports, baseprops, exports, types)) in AST.items():
+    define_ast(basename, imports, baseprops, exports, types)

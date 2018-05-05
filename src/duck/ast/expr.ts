@@ -2,6 +2,7 @@ import { Token } from '../token';
 import { DuckType } from '../types';
 
 export abstract class Expr {
+    public type: DuckType | undefined;
     public abstract accept<T>(visitor : Expr.Visitor<T>) : T;
 }
 
@@ -18,7 +19,7 @@ export namespace Expr {
     }
 
     export class Call extends Expr {
-        constructor(public callee: Expr, public token: Token, public parameters: PairParameter[], public type?: DuckType) {
+        constructor(public callee: Expr, public token: Token, public parameters: PairParameter[], public type: DuckType | undefined = undefined) {
             super();
         }
 

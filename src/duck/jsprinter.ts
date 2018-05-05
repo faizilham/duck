@@ -58,6 +58,19 @@ export class JSPrinter implements Expr.Visitor<string>, Stmt.Visitor<string> {
         return stmt.expr.accept(this) + ";";
     }
 
+    visitFuncStmt(stmt: Stmt.Func): string {
+        let result = `function func$${stmt.name.lexeme}(${stmt.parameters.map(x => x[0].lexeme).join(", ")}){\n`;
+
+        this.currentBlock++;
+        for (let statement of stmt.body){
+            result += this.tabulate(statement.accept(this) + "\n");
+        }
+        this.currentBlock--;
+        result += this.tabulate("}\n");
+
+        return result;
+    }
+
     visitIfStmt(stmt: Stmt.If): string {
         let condition = stmt.condition.accept(this);
 

@@ -63,6 +63,13 @@ export class Optimizer implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt | undefi
         return stmt;
     }
 
+    visitFuncStmt(stmt: Stmt.Func): Stmt | undefined {
+        let optimized = this.filterEmpty(stmt.body);
+        stmt.body = optimized;
+
+        return stmt;
+    }
+
     visitIfStmt(stmt: Stmt.If): Stmt | undefined {
         stmt.condition = this.cleanGrouping(stmt.condition.accept(this));
 

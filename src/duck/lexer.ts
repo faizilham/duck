@@ -23,6 +23,8 @@ const ReservedWords = new Map<TokenType>({
     "bool": TokenType.TYPE_BOOL,
 
     "struct": TokenType.STRUCT,
+    "func": TokenType.FUNC,
+    "return": TokenType.RETURN,
 
     "let": TokenType.LET,
     "print": TokenType.PRINT, // temporarily

@@ -41,6 +41,7 @@ export class Parser {
         try {
             if (this.match(TokenType.LET)) return this.varDeclaration();
             if (this.match(TokenType.STRUCT)) return this.structDeclaration();
+            if (this.match(TokenType.FUNC)) return this.funcDeclaration();
 
             return this.statement(); 
         } catch(err){
@@ -103,6 +104,50 @@ export class Parser {
         this.match(TokenType.SEMICOLON);
 
         return new Stmt.Expression(expr);
+    }
+
+    private funcDeclaration() : Stmt {
+        let token = this.previous();
+
+        let name = this.consume(TokenType.IDENTIFIER, "Expect function name");
+        
+        this.consume(TokenType.LEFT_PAREN, "Expect '('");
+
+        // read parameter
+        let params : Stmt.Parameter[] = [];        
+
+        if (!this.check(TokenType.RIGHT_PAREN)){
+            do {
+                let param = this.consume(TokenType.IDENTIFIER, "Expect parameter name");
+                this.consume(TokenType.COLON, "Expect ':'");
+                
+                let typeExpr = this.typeExpression();
+                params.push([param, typeExpr]);
+            } while(this.match(TokenType.COMMA));
+        }
+
+        this.consume(TokenType.RIGHT_PAREN, "Expect ')'");
+
+        // read return type
+        let returnType : TypeExpr | undefined;
+
+        if (this.match(TokenType.COLON)){
+            returnType = this.typeExpression();
+        }
+
+        // read body
+        this.consume(TokenType.LEFT_BRACE, "Expect '{");
+
+        let body : Stmt[] = [];
+
+        while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()){
+            let stmt = this.declaration();
+            if (stmt) body.push(stmt);
+        }
+
+        this.consume(TokenType.RIGHT_BRACE, "Expect '}");
+
+        return new Stmt.Func(name, params, body, returnType);
     }
 
     private ifStatement() : Stmt {

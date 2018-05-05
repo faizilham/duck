@@ -39,6 +39,16 @@ export namespace Stmt {
         }
     }
 
+    export class Func extends Stmt {
+        constructor(public name: Token, public parameters: Parameter[], public body: Stmt[], public returnType?: TypeExpr, public type?: DuckType) {
+            super();
+        }
+
+        public accept<T>(visitor : Visitor<T>) : T {
+            return visitor.visitFuncStmt(this);
+        }
+    }
+
     export class If extends Stmt {
         constructor(public token: Token, public condition: Expr, public thenBranch: Stmt, public elseBranch?: Stmt) {
             super();
@@ -103,6 +113,7 @@ export namespace Stmt {
         visitAssignmentStmt(stmt: Assignment) : T;
         visitBlockStmt(stmt: Block) : T;
         visitExpressionStmt(stmt: Expression) : T;
+        visitFuncStmt(stmt: Func) : T;
         visitIfStmt(stmt: If) : T;
         visitSetIndexStmt(stmt: SetIndex) : T;
         visitSetMemberStmt(stmt: SetMember) : T;
