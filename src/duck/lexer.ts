@@ -90,6 +90,12 @@ export class Lexer {
             // string
             case '"': this.readString(); break;
 
+            case '#':
+                while (!this.atEnd() && this.peek() !== '\n'){
+                    this.advance();
+                }
+            break;
+
             default:
                 if (this.isNumeric(c)){
                     this.readNumber();
