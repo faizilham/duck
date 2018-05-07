@@ -15,8 +15,6 @@ Experimenting with static type checking and structural subtyping.
     let l2 : number[]        # l2 is initialized with empty array
     let l3 = [1, "test"]     # ERROR! Element #0 and #1 have different type
     let l4 = []              # ERROR! can't infer type from empty array
-
-    
     ```
 
 2. Strict type checking at compile time
